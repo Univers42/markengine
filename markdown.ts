@@ -1,4 +1,4 @@
-import type { BlockType } from '../types/database';
+import type { BlockType } from '../../types/database';
 
 // ─── Block Detection ──────────────────────────────────────────────────────────
 // Mirrors: TermWriter::_parse_line() prefix dispatch
