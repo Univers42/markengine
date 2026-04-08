@@ -2,7 +2,7 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { compileMarkdownToHtml } = require("../dist/markdown.js");
+const ENGINE_PATH = path.join(__dirname, "..", "dist", "markdown.js");
 
 const PORT = Number(process.env.PORT || 3000);
 const ROOT = path.join(__dirname, "public");
@@ -61,6 +61,8 @@ async function handleApiPreview(req, res) {
     const raw = await readBody(req);
     const payload = raw ? JSON.parse(raw) : {};
     const source = typeof payload.markdown === "string" ? payload.markdown : "";
+    delete require.cache[require.resolve(ENGINE_PATH)];
+    const { compileMarkdownToHtml } = require(ENGINE_PATH);
     const result = compileMarkdownToHtml(source, { documentVersion: 1 });
 
     sendJson(res, 200, {
