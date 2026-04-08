@@ -19,7 +19,7 @@ TSC := tsc
 PYTHON := python3
 NODE := node
 
-.PHONY: help check lint typecheck py-check build test clean pdf
+.PHONY: help check lint typecheck py-check build test clean pdf playground
 .DEFAULT_GOAL := help
 
 help: ## Show available targets
@@ -47,6 +47,9 @@ build: ## Compile the TypeScript engine to dist/
 
 test: build ## Build the engine and run the test suite
 	@$(NODE) --test tests/*.test.js
+
+playground: build ## Start the markdown playground server on PORT=3000
+	@$(NODE) playground/server.js
 
 pdf: ## Build a PDF from a Markdown document (usage: make pdf INPUT=README.md [ARGS='...'])
 	@if [[ -z "$(INPUT)" ]]; then \

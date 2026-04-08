@@ -28,18 +28,18 @@ test("parses blocks into an AST", () => {
   ].join("\n");
 
   const result = parseMarkdown(source, { documentVersion: 1 });
-  assert.equal(result.ast.kind, "document");
-  assert.equal(result.ast.children.length, 6);
+  assert.ok(Array.isArray(result.ast));
+  assert.equal(result.ast.length, 6);
 
   const [heading, paragraph, blockquote, list, codeBlock, breakNode] =
-    result.ast.children;
-  assert.equal(heading.kind, "heading");
-  assert.equal(heading.depth, 1);
-  assert.equal(paragraph.kind, "paragraph");
-  assert.equal(blockquote.kind, "blockquote");
-  assert.equal(list.kind, "list");
-  assert.equal(codeBlock.kind, "code_block");
-  assert.equal(breakNode.kind, "thematic_break");
+    result.ast;
+  assert.equal(heading.type, "heading");
+  assert.equal(heading.level, 1);
+  assert.equal(paragraph.type, "paragraph");
+  assert.equal(blockquote.type, "blockquote");
+  assert.equal(list.type, "unordered_list");
+  assert.equal(codeBlock.type, "code_block");
+  assert.equal(breakNode.type, "thematic_break");
 });
 
 test("renders semantic html for inline and block nodes", () => {
@@ -53,16 +53,16 @@ test("renders semantic html for inline and block nodes", () => {
 });
 
 test("parses inline links and code spans", () => {
-  const nodes = parseInlines("See [docs](https://example.com) and `code`.", 0);
+  const nodes = parseInlines("See [docs](https://example.com) and `code`.");
 
   assert.equal(nodes.length, 5);
-  assert.equal(nodes[0].kind, "text");
-  assert.equal(nodes[1].kind, "link");
+  assert.equal(nodes[0].type, "text");
+  assert.equal(nodes[1].type, "link");
   assert.equal(nodes[1].href, "https://example.com");
-  assert.equal(nodes[2].kind, "text");
-  assert.equal(nodes[3].kind, "code_span");
+  assert.equal(nodes[2].type, "text");
+  assert.equal(nodes[3].type, "code");
   assert.equal(nodes[3].value, "code");
-  assert.equal(nodes[4].kind, "text");
+  assert.equal(nodes[4].type, "text");
 });
 
 test("supports incremental reparsing", () => {
@@ -75,7 +75,7 @@ test("supports incremental reparsing", () => {
     text: "A *very fast* **AST** engine.",
   });
 
-  assert.equal(next.ast.children.length, 2);
+  assert.equal(next.ast.length, 2);
   assert.equal(next.changedNodeIds.length, 1);
   assert.ok(next.changedNodeIds[0]);
   assert.match(renderHtml(next.ast), /very fast/);
