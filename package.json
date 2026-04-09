@@ -3,12 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "build": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022",
-    "start": "node playground/server.js",
-    "dev": "nodemon --legacy-watch --watch markdown --watch playground/public --watch playground/server.js --watch markdown.ts --watch tsconfig.json --ext ts,js,html,css --exec \"npm run build && node playground/server.js\""
+    "build:engine": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022",
+    "build": "npm run build:engine && vite build",
+    "dev:engine": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022 --watch --preserveWatchOutput",
+    "start": "vite preview --host --port 3000 --strictPort",
+    "dev": "concurrently -k -n ENGINE,VITE -c cyan,green \"npm:dev:engine\" \"vite --host --port 3000 --strictPort\""
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
-    "typescript": "^5.9.3"
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.8"
   }
 }
