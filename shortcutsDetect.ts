@@ -17,7 +17,7 @@ export const BLOCK_SHORTCUTS: Record<string, string> = {
   heading_6: '###### ',
   bulleted_list: '- ',
   numbered_list: '1. ',
-  to_do: '[] ',
+  to_do: '- [] ',
   quote: '" ',
   toggle: '> ',
   code: '```',
@@ -98,8 +98,9 @@ function detectToDo(line: string): BlockDetection | null {
  */
 export function detectBlockType(text: string): BlockDetection | null {
   const line = ltrim(text);
+  const lineNoTrail = line.trimEnd();
 
-  if (line.length >= 3 && isRepeated(line, '-')) {
+  if (lineNoTrail.length >= 3 && isRepeated(lineNoTrail, '-')) {
     return { type: 'divider', content: '', remainingContent: '' };
   }
   if (line === '```' || line.startsWith('```')) {
