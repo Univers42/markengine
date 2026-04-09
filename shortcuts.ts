@@ -1,7 +1,7 @@
 // Markdown shortcuts — inline parsing and block conversion
 import type { BlockType, Block } from "../../types/database";
-import type { InlineNode } from "./ast";
-import { parse, parseInline } from "./parser";
+import type { InlineNode } from "./markdown/ast";
+import { parse, parseInline } from "./markdown/parser";
 
 export type { BlockDetection } from "./shortcutsDetect";
 export { BLOCK_SHORTCUTS, detectBlockType } from "./shortcutsDetect";
@@ -70,7 +70,7 @@ export function parseMarkdownToBlocks(markdown: string): Block[] {
   return ast.flatMap((node) => astToBlocks(node));
 }
 
-function astToBlocks(node: import("./ast").BlockNode): Block[] {
+function astToBlocks(node: import("./markdown/ast").BlockNode): Block[] {
   switch (node.type) {
     case "heading": {
       const level = Math.min(node.level, 4);
@@ -190,7 +190,7 @@ function inlineToPlain(nodes: InlineNode[]): string {
     .join("");
 }
 
-function blockToPlain(node: import("./ast").BlockNode): string {
+function blockToPlain(node: import("./markdown/ast").BlockNode): string {
   switch (node.type) {
     case "paragraph":
       return inlineToPlain(node.children);
