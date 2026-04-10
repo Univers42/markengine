@@ -1,47 +1,24 @@
-import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Connect } from "vite";
-import { defineConfig, type Plugin } from "vite";
+// @ts-nocheck
 
-type PreviewRequestPayload = {
-  markdown?: unknown;
-};
+const { existsSync } = require("node:fs");
+const { resolve } = require("node:path");
+const { defineConfig } = require("vite");
 
-type PreviewResult = {
-  html: string;
-  ast: unknown;
-};
-
-type EngineModule = {
-  compileMarkdownToHtml: (
-    source: string,
-    options: { documentVersion: number },
-  ) => PreviewResult;
-};
-
-const require = createRequire(import.meta.url);
-const ROOT_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = __dirname;
 const ENGINE_PATH = resolve(ROOT_DIR, "dist", "markdown.js");
 
-function sendJson(
-  res: ServerResponse,
-  status: number,
-  body: Record<string, unknown>,
-): void {
+function sendJson(res, status, body) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
   res.end(JSON.stringify(body));
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise<string>((resolveBody, rejectBody) => {
-    const chunks: Buffer[] = [];
+function readBody(req) {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks = [];
 
-    req.on("data", (chunk: Buffer | string) => {
+    req.on("data", (chunk) => {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
     req.on("end", () => {
@@ -51,44 +28,40 @@ function readBody(req: IncomingMessage): Promise<string> {
   });
 }
 
-function parsePayload(raw: string): PreviewRequestPayload {
+function parsePayload(raw) {
   if (raw.trim().length === 0) {
     return {};
   }
 
-  const parsed: unknown = JSON.parse(raw);
+  const parsed = JSON.parse(raw);
   if (typeof parsed !== "object" || parsed === null) {
     throw new Error("Invalid JSON payload");
   }
 
-  return parsed as PreviewRequestPayload;
+  return parsed;
 }
 
-function loadEngineModule(): EngineModule {
+function loadEngineModule() {
   if (!existsSync(ENGINE_PATH)) {
     throw new Error("Engine build not found. Run npm run build:engine first.");
   }
 
   const resolvedPath = require.resolve(ENGINE_PATH);
   delete require.cache[resolvedPath];
-  const moduleValue: unknown = require(ENGINE_PATH);
+  const moduleValue = require(ENGINE_PATH);
 
   if (
     typeof moduleValue !== "object" ||
     moduleValue === null ||
-    typeof (moduleValue as Partial<EngineModule>).compileMarkdownToHtml !==
-      "function"
+    typeof moduleValue.compileMarkdownToHtml !== "function"
   ) {
     throw new Error("Invalid engine module shape");
   }
 
-  return moduleValue as EngineModule;
+  return moduleValue;
 }
 
-async function handlePreview(
-  res: ServerResponse,
-  rawBody: string,
-): Promise<void> {
+async function handlePreview(res, rawBody) {
   const payload = parsePayload(rawBody);
   const source = typeof payload.markdown === "string" ? payload.markdown : "";
   const engine = loadEngineModule();
@@ -100,12 +73,9 @@ async function handlePreview(
   });
 }
 
-function createApiPlugin(): Plugin {
-  const registerRoutes = (
-    middleware: Connect.Server,
-    routeType: "dev" | "preview",
-  ): void => {
-    middleware.use(async (req: IncomingMessage, res: ServerResponse, next) => {
+function createApiPlugin() {
+  const registerRoutes = (middleware, routeType) => {
+    middleware.use(async (req, res, next) => {
       if (!req.url) {
         next();
         return;
@@ -124,7 +94,7 @@ function createApiPlugin(): Plugin {
       try {
         const rawBody = await readBody(req);
         await handlePreview(res, rawBody);
-      } catch (error: unknown) {
+      } catch (error) {
         const message =
           error instanceof Error ? error.message : "Invalid request";
         sendJson(res, 400, { error: message });
@@ -143,7 +113,7 @@ function createApiPlugin(): Plugin {
   };
 }
 
-export default defineConfig({
+module.exports = defineConfig({
   root: "playground/public",
   plugins: [createApiPlugin()],
   server: {

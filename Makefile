@@ -14,12 +14,11 @@ INFO := $(CYAN)ℹ$(RESET)
 WARN := $(YELLOW)⚠$(RESET)
 
 NPM := npm
-NODE := node
 
 IMAGE_NAME ?= markengine:local
 CONTAINER_NAME ?= markengine-dev
 
-.PHONY: help deps build test dev playground start up stop down rm clean logs lint typecheck check reinstall
+.PHONY: help deps doctor build build-engine test dev playground start up stop down rm clean logs lint typecheck check reinstall
 .DEFAULT_GOAL := help
 
 help: ## Show available targets
@@ -34,15 +33,23 @@ deps: ## Install dependencies with pnpm
 	@corepack enable && pnpm install
 	@echo -e "$(SUCCESS) Dependencies installed"
 
-build-engine: ## Build TypeScript engine
-	@echo -e "$(INFO) Building engine...$(RESET)"
-	@corepack enable && pnpm run build
-	@echo -e "$(SUCCESS) Engine built$(RESET)"
+doctor: ## Verify required tooling and key files
+	@echo -e "$(INFO) Running environment checks...$(RESET)"
+	@(command -v $(NPM) >/dev/null && echo -e "$(SUCCESS) $(NPM) found$(RESET)") || { echo -e "$(RED) $(NPM) not found$(RESET)"; exit 1; }
+	@(command -v $(DOCKER) >/dev/null && echo -e "$(SUCCESS) Docker found$(RESET)") || echo -e "$(RED) Docker not found (docker targets unavailable)$(RESET)"
+	@test -f package.json || { echo -e "$(RED)package.json not found$(RESET)"; exit 1; }
+	@test -f tsconfig.json || { echo -e "$(RED)tsconfig.json not found$(RESET)"; exit 1; }
+	@echo -e "$(SUCCESS) Environment checks passed$(RESET)"
 
 build: ## Build Docker image
 	@echo -e "$(INFO) Building image $(IMAGE_NAME)..."
 	@docker build -t $(IMAGE_NAME) .
 	@echo -e "$(SUCCESS) Image built: $(IMAGE_NAME)"
+
+build-engine: ## Compile only the markdown engine to dist/
+	@echo -e "$(INFO) Building TypeScript engine...$(RESET)"
+	@$(NPM) run build:engine
+	@echo -e "$(SUCCESS) Engine build complete$(RESET)"
 
 test: ## Build the engine and run the test suite
 	@echo -e "$(INFO) Running tests...$(RESET)"
