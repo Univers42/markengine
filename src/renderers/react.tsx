@@ -27,11 +27,14 @@ export interface ReactRenderOptions {
   imageRenderer?: (src: string, alt: string, title?: string) => React.ReactElement;
   /** Callback for checkbox toggle in task lists */
   onTaskToggle?: (index: number, checked: boolean) => void;
+  /** Resolve Obsidian-style wikilinks to hrefs */
+  resolveWikilink?: (target: string) => string;
 }
 
 const defaults: Required<Omit<ReactRenderOptions, 'codeBlockRenderer' | 'mathRenderer' | 'imageRenderer' | 'onTaskToggle'>> = {
   classPrefix: 'md',
   externalLinks: true,
+  resolveWikilink: (target: string) => target,
 };
 
 export function renderReact(

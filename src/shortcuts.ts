@@ -42,6 +42,12 @@ function renderInlineNodesToHtml(nodes: InlineNode[]): string {
           return `<code class="inline-code" style="${inlineCodeStyle}">${escHtml(node.value)}</code>`;
         case "link":
           return `<a href="${escHtml(node.href)}">${renderInlineNodesToHtml(node.children)}</a>`;
+        case "wikilink": {
+          const label = escHtml(node.alias ?? node.target);
+          const inner = node.alias ? `${node.target}|${node.alias}` : node.target;
+          const raw = `${node.embed ? "!" : ""}[[${inner}]]`;
+          return `<a href="#" data-wikilink="${escHtml(node.target)}" title="${escHtml(raw)}">${label}</a>`;
+        }
         case "image":
           return `<img src="${escHtml(node.src)}" alt="${escHtml(node.alt)}" />`;
         case "highlight":
@@ -171,6 +177,8 @@ function inlineToPlain(nodes: InlineNode[]): string {
           return n.value;
         case "link":
           return inlineToPlain(n.children);
+        case "wikilink":
+          return n.alias ?? n.target;
         case "image":
           return n.alt;
         case "emoji":

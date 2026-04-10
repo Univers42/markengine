@@ -147,6 +147,18 @@ export function renderInlineNode(
         ...renderInlines(node.children, o),
       );
     }
+    case "wikilink": {
+      const href = typeof o.resolveWikilink === "function"
+        ? o.resolveWikilink(node.target)
+        : node.target;
+      const props: Record<string, unknown> = {
+        key,
+        href,
+        "data-wikilink": node.target,
+        ...(node.embed ? { "data-embed": "true" } : {}),
+      };
+      return React.createElement("a", props, node.alias ?? node.target);
+    }
 
     case "image": {
       if (o.imageRenderer) {

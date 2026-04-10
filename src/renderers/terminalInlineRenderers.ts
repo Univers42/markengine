@@ -38,6 +38,11 @@ export function renderInline(node: InlineNode, ctx: RenderCtx): string {
       return `${c(ctx, C.code + C.codeBg)} ${node.value} ${reset(ctx)}`;
     case 'link':
       return `${c(ctx, C.link + UNDERLINE)}${renderInlines(node.children, ctx)}${reset(ctx)}${c(ctx, DIM)} (${node.href})${reset(ctx)}`;
+    case 'wikilink': {
+      const label = node.alias ?? node.target;
+      const suffix = node.embed ? ' (embed)' : '';
+      return `${c(ctx, C.link + UNDERLINE)}${label}${reset(ctx)}${c(ctx, DIM)} ([[${node.target}]])${suffix}${reset(ctx)}`;
+    }
     case 'image':
       return `${c(ctx, DIM)}[image: ${node.alt}]${reset(ctx)}`;
     case 'line_break':
@@ -65,6 +70,7 @@ export function renderInlinesPlain(nodes: InlineNode[]): string {
         return renderInlinesPlain(n.children);
       case 'code': return n.value;
       case 'link': return renderInlinesPlain(n.children);
+      case 'wikilink': return n.alias ?? n.target;
       case 'image': return n.alt;
       case 'line_break': return ' ';
       case 'math_inline': return n.value;

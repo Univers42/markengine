@@ -34,6 +34,31 @@ function findSingleEmphasisClose(text: string, pos: number, marker: '*' | '_'): 
 
 export function createInlineMatchers(parseInline: InlineParser): InlineMatcher[] {
   return [
+    // Obsidian-style wikilinks and embeds:
+    //   [[Note Name]]
+    //   [[Note Name|Alias]]
+    //   ![[Note Name]]
+    //   ![[Note Name#Heading|Alias]]
+    (text, pos) => {
+      const isEmbed = text[pos] === '!' && text[pos + 1] === '[' && text[pos + 2] === '[';
+      const isLink = text[pos] === '[' && text[pos + 1] === '[';
+      if (!isEmbed && !isLink) return null;
+      const startPos = pos;
+      const openLen = isEmbed ? 3 : 2;
+      const start = pos + openLen;
+      const close = text.indexOf(']]', start);
+      if (close === -1) return null;
+      const inner = text.slice(start, close);
+      if (!inner.trim()) return null;
+      const pipeIdx = inner.indexOf('|');
+      const target = (pipeIdx === -1 ? inner : inner.slice(0, pipeIdx)).trim();
+      const alias = pipeIdx === -1 ? undefined : inner.slice(pipeIdx + 1).trim() || undefined;
+      return {
+        start: startPos,
+        end: close + 2,
+        node: { type: 'wikilink', target, alias, embed: isEmbed || undefined },
+      };
+    },
     (text, pos) => {
       if (text[pos] !== '\\' || pos + 1 >= text.length) return null;
       const next = text[pos + 1];

@@ -25,6 +25,22 @@
 
 // ─── Inline nodes (leaf-level text/formatting) ────────────────────────────────
 
+export type NodeRange = { startLine: number; endLine: number };
+
+export type NodeMeta = {
+  /**
+   * Stable identifier for a block node (Notion-style).
+   * Stored in Markdown via a hidden annotation and round-tripped.
+   */
+  blockId?: string;
+  /** Arbitrary per-block metadata (collapsed, color, last_edited_by, etc.) */
+  meta?: Record<string, unknown>;
+  /** 0-based inclusive line range in the source markdown */
+  range?: NodeRange;
+  /** Editor state: whether this block is in "source" mode (focused) */
+  active?: boolean;
+};
+
 export type InlineNode =
   | { type: 'text'; value: string }
   | { type: 'bold'; children: InlineNode[] }
@@ -34,6 +50,7 @@ export type InlineNode =
   | { type: 'underline'; children: InlineNode[] }
   | { type: 'code'; value: string }
   | { type: 'link'; href: string; title?: string; children: InlineNode[] }
+  | { type: 'wikilink'; target: string; alias?: string; embed?: boolean }
   | { type: 'image'; src: string; alt: string; title?: string }
   | { type: 'line_break' }
   | { type: 'highlight'; children: InlineNode[] }
@@ -61,6 +78,10 @@ export type BlockNode =
   | { type: 'footnote_def'; label: string; children: BlockNode[] }
   | { type: 'definition_list'; items: DefinitionItem[] }
   | { type: 'toggle'; summary: InlineNode[]; children: BlockNode[] };
+
+// Overlay metadata onto every node without changing the structural shape.
+export type InlineNodeWithMeta = InlineNode & NodeMeta;
+export type BlockNodeWithMeta = BlockNode & NodeMeta;
 
 export interface ListItemNode {
   type: 'list_item';
@@ -96,7 +117,7 @@ export interface DefinitionItem {
 export function isInlineNode(node: any): node is InlineNode {
   return node && typeof node.type === 'string' && [
     'text', 'bold', 'italic', 'bold_italic', 'strikethrough', 'underline',
-    'code', 'link', 'image', 'line_break', 'highlight', 'math_inline',
+    'code', 'link', 'wikilink', 'image', 'line_break', 'highlight', 'math_inline',
     'footnote_ref', 'emoji',
   ].includes(node.type);
 }

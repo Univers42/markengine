@@ -55,6 +55,15 @@ export { isInlineNode, isBlockNode } from "./ast";
 
 // ─── Parser ──────────────────────────────────────────────────────────────────
 export { parse, parseInline } from "./parser";
+export { parseWithMeta } from "./parser";
+export type { ParseWithMetaOptions, ParseWithMetaResult } from "./parser";
+
+// ─── Block editor bridge (Notion + Obsidian) ─────────────────────────────────
+export { parseEditorBlocks, stringifyEditorBlocks } from "./blocks";
+export type { EditorBlock, ParseEditorBlocksOptions, StringifyEditorBlocksOptions } from "./blocks";
+
+export { reconcileBlocks, setActiveBlock } from "./reconciler";
+export type { ReconcileOptions } from "./reconciler";
 
 // ─── Renderers ───────────────────────────────────────────────────────────────
 export { renderHtml } from "./renderers/html";
@@ -65,6 +74,10 @@ export type { ReactRenderOptions } from "./renderers/react";
 
 export { renderTerminal } from "./renderers/terminal";
 export type { TerminalRenderOptions } from "./renderers/terminal";
+
+// ─── Graph extraction (Obsidian-style) ───────────────────────────────────────
+export { extractOutgoingConnections, buildBacklinkIndex } from "./graph";
+export type { OutgoingConnections, GraphIndexEntry, BacklinkIndex } from "./graph";
 
 // ─── Shortcuts (backwards compatible with old markdownEngine) ────────────────
 export {

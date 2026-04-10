@@ -9,6 +9,8 @@ export interface HtmlRenderOptions {
   externalLinks?: boolean;
   classPrefix?: string;
   sanitizeHtml?: boolean;
+  /** Resolve Obsidian-style wikilinks to hrefs */
+  resolveWikilink?: (target: string) => string;
 }
 
 const defaults: Required<HtmlRenderOptions> = {
@@ -16,6 +18,7 @@ const defaults: Required<HtmlRenderOptions> = {
   externalLinks: true,
   classPrefix: 'md',
   sanitizeHtml: false,
+  resolveWikilink: (target: string) => target,
 };
 
 
@@ -167,6 +170,12 @@ function renderInline(node: InlineNode, o: Required<HtmlRenderOptions>): string 
         o.externalLinks && isExternal(node.href) ? 'target="_blank" rel="noopener noreferrer"' : '',
       ].filter(Boolean).join(' ');
       return `<a ${attrs}>${renderInlines(node.children, o)}</a>`;
+    }
+    case 'wikilink': {
+      const label = esc(node.alias ?? node.target);
+      const href = esc(o.resolveWikilink(node.target));
+      const embedAttr = node.embed ? ' data-embed="true"' : '';
+      return `<a href="${href}" data-wikilink="${esc(node.target)}"${embedAttr}>${label}</a>`;
     }
     case 'image': {
       const titleAttr = node.title ? ` title="${esc(node.title)}"` : '';
