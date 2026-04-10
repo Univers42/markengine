@@ -44,20 +44,18 @@ function isThematicBreak(line: string): boolean {
   return /^---+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed);
 }
 
-function parseListMarker(
-  line: string,
-): {
+function parseListMarker(line: string): {
   ordered: boolean;
   start: number;
   markerLength: number;
   checked?: boolean;
 } | null {
-  const unordered = line.match(/^\s*[-*+]\s+/);
+  const unordered = /^\s*[-*+]\s+/.exec(line);
   if (unordered) {
     return { ordered: false, start: 1, markerLength: unordered[0].length };
   }
 
-  const ordered = line.match(/^\s*(\d+)\.\s+/);
+  const ordered = /^\s*(\d+)\.\s+/.exec(line);
   if (ordered) {
     return {
       ordered: true,
@@ -66,7 +64,7 @@ function parseListMarker(
     };
   }
 
-  const todo = line.match(/^\s*[-*+]\s+\[( |x|X)\]\s+/);
+  const todo = /^\s*[-*+]\s+\[([ xX])\]\s+/.exec(line);
   if (todo) {
     return {
       ordered: false,
@@ -165,7 +163,7 @@ function parseList(
 
   while (cursor < lines.length) {
     const marker = parseListMarker(lines[cursor]);
-    if (!marker || marker.ordered !== firstMarker.ordered) break;
+    if (!marker || marker?.ordered !== firstMarker.ordered) break;
 
     const itemText = lines[cursor].slice(marker.markerLength).trim();
     const paragraph = parseParagraph([itemText], 0, 0);
@@ -216,89 +214,17 @@ export function parseMarkdown(
       continue;
     }
 
-    if (trimmed.startsWith("```")) {
-      const { node, nextLine } = parseCodeBlock(lines, cursor);
-      children.push(node);
-      blockIndex.push({
-        id: node.id,
-        startLine: node.span.startLine,
-        endLine: node.span.endLine,
-      });
-      cursor = nextLine;
+    const parsedBlock = parseNonParagraphBlock(lines, cursor);
+    if (parsedBlock) {
+      pushBlock(children, blockIndex, parsedBlock.node);
+      cursor = parsedBlock.nextLine;
       continue;
     }
 
-    if (line.trimStart().startsWith(">")) {
-      const { node, nextLine } = parseBlockquote(lines, cursor);
-      children.push(node);
-      blockIndex.push({
-        id: node.id,
-        startLine: node.span.startLine,
-        endLine: node.span.endLine,
-      });
-      cursor = nextLine;
-      continue;
-    }
-
-    const heading = parseHeading(trimmed);
-    if (heading) {
-      const node: HeadingNode = {
-        id: stableId(`h:${cursor}:${heading.depth}:${heading.content}`),
-        kind: "heading",
-        depth: heading.depth,
-        children: parseInlines(heading.content, cursor),
-        span: span(cursor, cursor, 0, line.length),
-      };
-      children.push(node);
-      blockIndex.push({ id: node.id, startLine: cursor, endLine: cursor });
-      cursor++;
-      continue;
-    }
-
-    if (isThematicBreak(line)) {
-      const node: ThematicBreakNode = {
-        id: stableId(`hr:${cursor}:${trimmed}`),
-        kind: "thematic_break",
-        span: span(cursor, cursor, 0, line.length),
-      };
-      children.push(node);
-      blockIndex.push({ id: node.id, startLine: cursor, endLine: cursor });
-      cursor++;
-      continue;
-    }
-
-    const marker = parseListMarker(line);
-    if (marker) {
-      const { node, nextLine } = parseList(lines, cursor);
-      children.push(node);
-      blockIndex.push({
-        id: node.id,
-        startLine: node.span.startLine,
-        endLine: node.span.endLine,
-      });
-      cursor = nextLine;
-      continue;
-    }
-
-    let paraEnd = cursor;
-    while (paraEnd + 1 < lines.length) {
-      const candidate = lines[paraEnd + 1].trim();
-      if (candidate.length === 0) break;
-      if (candidate.startsWith("```")) break;
-      if (lines[paraEnd + 1].trimStart().startsWith(">")) break;
-      if (parseHeading(candidate)) break;
-      if (parseListMarker(lines[paraEnd + 1])) break;
-      if (isThematicBreak(candidate)) break;
-      paraEnd++;
-    }
+    const paraEnd = findParagraphEnd(lines, cursor);
 
     const paragraph = parseParagraph(lines, cursor, paraEnd);
-    children.push(paragraph);
-    blockIndex.push({
-      id: paragraph.id,
-      startLine: paragraph.span.startLine,
-      endLine: paragraph.span.endLine,
-    });
+    pushBlock(children, blockIndex, paragraph);
     cursor = paraEnd + 1;
   }
 
@@ -316,4 +242,83 @@ export function parseMarkdown(
   };
 
   return { ast: doc, blockIndex };
+}
+
+function pushBlock(
+  children: BlockNode[],
+  blockIndex: BlockRange[],
+  node: BlockNode,
+): void {
+  children.push(node);
+  blockIndex.push({
+    id: node.id,
+    startLine: node.span.startLine,
+    endLine: node.span.endLine,
+  });
+}
+
+function parseNonParagraphBlock(
+  lines: string[],
+  cursor: number,
+): { node: BlockNode; nextLine: number } | null {
+  const line = lines[cursor];
+  const trimmed = line.trim();
+
+  if (trimmed.startsWith("```")) {
+    return parseCodeBlock(lines, cursor);
+  }
+
+  if (line.trimStart().startsWith(">")) {
+    return parseBlockquote(lines, cursor);
+  }
+
+  const heading = parseHeading(trimmed);
+  if (heading) {
+    const node: HeadingNode = {
+      id: stableId(`h:${cursor}:${heading.depth}:${heading.content}`),
+      kind: "heading",
+      depth: heading.depth,
+      children: parseInlines(heading.content, cursor),
+      span: span(cursor, cursor, 0, line.length),
+    };
+    return { node, nextLine: cursor + 1 };
+  }
+
+  if (isThematicBreak(line)) {
+    const node: ThematicBreakNode = {
+      id: stableId(`hr:${cursor}:${trimmed}`),
+      kind: "thematic_break",
+      span: span(cursor, cursor, 0, line.length),
+    };
+    return { node, nextLine: cursor + 1 };
+  }
+
+  if (parseListMarker(line)) {
+    return parseList(lines, cursor);
+  }
+
+  return null;
+}
+
+function isParagraphBoundary(lines: string[], index: number): boolean {
+  const candidateLine = lines[index];
+  const candidate = candidateLine.trim();
+  if (candidate.length === 0) return true;
+  if (candidate.startsWith("```")) return true;
+  if (candidateLine.trimStart().startsWith(">")) return true;
+  if (parseHeading(candidate)) return true;
+  if (parseListMarker(candidateLine)) return true;
+  if (isThematicBreak(candidate)) return true;
+  return false;
+}
+
+function findParagraphEnd(lines: string[], startLine: number): number {
+  let paraEnd = startLine;
+  while (
+    paraEnd + 1 < lines.length &&
+    !isParagraphBoundary(lines, paraEnd + 1)
+  ) {
+    paraEnd++;
+  }
+  return paraEnd;
 }

@@ -49,17 +49,17 @@ async function render() {
 
 function escapeHtml(value) {
   return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replaceAll('&', "&amp;")
+    .replaceAll('<', "&lt;")
+    .replaceAll('>', "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll('\'', "&#39;");
 }
 
 let timer = 0;
 function scheduleRender() {
-  window.clearTimeout(timer);
-  timer = window.setTimeout(() => {
+  globalThis.clearTimeout(timer);
+  timer = globalThis.setTimeout(() => {
     render().catch((error) => {
       preview.innerHTML = `<pre class="error">${escapeHtml(error.message)}</pre>`;
     });
