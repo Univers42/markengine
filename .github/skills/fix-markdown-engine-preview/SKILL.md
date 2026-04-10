@@ -1,0 +1,12 @@
+---
+name: fix-markdown-engine-preview
+description: Fixing/Improving the markdown engine playground preview
+---
+
+To fix or improve the markdown engine playground preview, you can follow these steps:
+
+1. The code block in the markdown engine playground preview is not rendering different colors for different languages. This is a known issue that need to be fixed for the MVP. To fix this, you can check the code block rendering logic and ensure that it correctly identifies the language specified in the markdown and applies the appropriate syntax highlighting.
+2. The mermaid diagrams are not rendering in the markdown engine playground preview. This is also a known issue that need to be fixed for the MVP. To fix this, you can check the mermaid diagram rendering logic and ensure that it correctly processes the mermaid syntax and renders the diagrams as expected.
+3. The callouts are not rendering in the markdown engine playground preview. This is another known issue that need to be fixed for the MVP. To fix this, you can check the callout rendering logic and ensure that it correctly identifies the callout syntax in the markdown and renders the callouts with the appropriate styling. The standard callout syntax is detected and rendered (`>` followed by a space and the callout type, such as `> note`, `> warning`, etc.). The rest of callouts are not being rendered, so you can check the callout rendering logic and ensure that it correctly identifies the callout syntax in the markdown and renders the callouts with the appropriate styling. Those callouts include `> [!tip]`, `> [!note]`, `> [!error]`, `> [!tip]`, `> [!faq]`, `> [!todo]`, `> [!example]`. You can check the callout rendering logic and ensure that it correctly identifies the callout syntax in the markdown and renders the callouts with the appropriate styling. To see more details about the callout syntax, you can refer to the markdown documentation of [obsidian](https://obsidian.md/help/callouts).
+4. The markdown engine playground should render the preview and the editor in the same way as Obsidian. To achieve this, you can compare the rendering logic of the markdown engine playground with that of Obsidian and ensure that they are consistent in terms of how they process and render markdown content. This may involve reviewing the markdown parsing and rendering code in both the markdown engine playground and Obsidian to identify any discrepancies and making necessary adjustments to align the rendering behavior.
+

@@ -52,6 +52,24 @@ test("renders semantic html for inline and block nodes", () => {
   assert.match(result.html, /<p[^>]*>A /);
 });
 
+test("renders language-specific code block classes", () => {
+  const source = ["```python", "print('hello')", "```"].join("\n");
+
+  const result = compileMarkdownToHtml(source);
+
+  assert.match(result.html, /<code class="language-python">/);
+});
+
+test("renders callouts with md classes", () => {
+  const source = ["> [!warning] Heads up", "> Body text"].join("\n");
+
+  const result = compileMarkdownToHtml(source);
+
+  assert.match(result.html, /class="md-callout md-callout-warning"/);
+  assert.match(result.html, /<div class="md-callout-title">Heads up<\/div>/);
+  assert.match(result.html, /<p[^>]*>Body text<\/p>/);
+});
+
 test("parses inline links and code spans", () => {
   const nodes = parseInlines("See [docs](https://example.com) and `code`.");
 
