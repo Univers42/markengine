@@ -19,7 +19,7 @@ export function renderTermTable(
 ): string {
   const allRows = [node.head, ...node.rows];
   const colCount = node.head.cells.length;
-  const colWidths = new Array<number>(colCount).fill(0);
+  const colWidths = Array.from({ length: colCount }, () => 0);
   for (const row of allRows) {
     for (let i = 0; i < colCount; i++) {
       const cell = row.cells[i];
