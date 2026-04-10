@@ -13,10 +13,13 @@ FAIL := $(RED)✗$(RESET)
 INFO := $(CYAN)ℹ$(RESET)
 WARN := $(YELLOW)⚠$(RESET)
 
+NPM := npm
+NODE := node
+
 IMAGE_NAME ?= markengine:local
 CONTAINER_NAME ?= markengine-dev
 
-.PHONY: help deps build start up stop down rm clean logs lint typecheck check
+.PHONY: help deps build test dev playground start up stop down rm clean logs lint typecheck check reinstall
 .DEFAULT_GOAL := help
 
 help: ## Show available targets
@@ -31,10 +34,27 @@ deps: ## Install dependencies with pnpm
 	@corepack enable && pnpm install
 	@echo -e "$(SUCCESS) Dependencies installed"
 
+build-engine: ## Build TypeScript engine
+	@echo -e "$(INFO) Building engine...$(RESET)"
+	@corepack enable && pnpm run build
+	@echo -e "$(SUCCESS) Engine built$(RESET)"
+
 build: ## Build Docker image
 	@echo -e "$(INFO) Building image $(IMAGE_NAME)..."
 	@docker build -t $(IMAGE_NAME) .
 	@echo -e "$(SUCCESS) Image built: $(IMAGE_NAME)"
+
+test: ## Build the engine and run the test suite
+	@echo -e "$(INFO) Running tests...$(RESET)"
+	@$(MAKE) -s build-engine
+	@$(NODE) --test tests/*.test.js
+	@echo -e "$(SUCCESS) All tests passed$(RESET)"
+
+dev: ## Start playground in dev mode (Vite + TS watch)
+	@echo -e "$(INFO) Starting playground in dev mode...$(RESET)"
+	@$(NPM) run dev
+
+playground: dev ## Alias for dev playground
 
 start: ## Start container in detached mode
 	@echo -e "$(INFO) Starting container $(CONTAINER_NAME)..."
@@ -91,3 +111,9 @@ check: ## Run lint and typecheck
 	@$(MAKE) -s lint
 	@$(MAKE) -s typecheck
 	@echo -e "$(SUCCESS) Checks passed"
+
+reinstall: ## Reinstall dependencies from scratch
+	@echo -e "$(INFO) Reinstalling dependencies from scratch...$(RESET)"
+	@rm -rf node_modules
+	@$(NPM) install
+	@echo -e "$(SUCCESS) Reinstall complete$(RESET)"

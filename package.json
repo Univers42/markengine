@@ -13,7 +13,10 @@
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "oxlint ."
+    "lint": "oxlint .",
+    "build:engine": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022",
+    "dev:engine": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022 --watch --preserveWatchOutput",
+    "dev": "concurrently -k -n ENGINE,VITE -c cyan,green \"npm:dev:engine\" \"vite --host --port 3000 --strictPort\""
   },
   "dependencies": {
     "react": "^19.1.0"
@@ -22,7 +25,9 @@
     "@types/node": "^22.15.3",
     "@types/react": "^19.1.2",
     "oxlint": "^1.24.0",
-    "typescript": "^5.8.3"
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.8"
   },
   "engines": {
     "node": ">=22.0.0",

@@ -14,8 +14,8 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx"
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ],
   "exclude": [
     "dist",
