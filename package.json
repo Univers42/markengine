@@ -1,17 +1,32 @@
 {
   "name": "markengine",
-  "private": true,
   "version": "0.1.0",
+  "description": "Standalone markdown parser and renderers (HTML, React, terminal)",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build:engine": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022",
-    "build": "npm run build:engine && vite build",
-    "dev:engine": "tsc -p tsconfig.json --outDir dist --module commonjs --declaration false --target ES2022 --watch --preserveWatchOutput",
-    "start": "vite preview --host --port 3000 --strictPort",
-    "dev": "concurrently -k -n ENGINE,VITE -c cyan,green \"npm:dev:engine\" \"vite --host --port 3000 --strictPort\""
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "oxlint ."
+  },
+  "dependencies": {
+    "react": "^19.1.0"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "typescript": "^5.9.3",
-    "vite": "^7.1.8"
-  }
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.2",
+    "oxlint": "^1.24.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.7.1"
 }

@@ -1,10 +1,18 @@
 // Markdown shortcuts — inline parsing and block conversion
-import type { BlockType, Block } from "../../types/database";
-import type { InlineNode } from "./markdown/ast";
-import { parse, parseInline } from "./markdown/parser";
+import type { BlockType } from "./shortcutsDetect";
+import type { InlineNode } from "./ast";
+import { parse, parseInline } from "./parser";
 
 export type { BlockDetection } from "./shortcutsDetect";
 export { BLOCK_SHORTCUTS, detectBlockType } from "./shortcutsDetect";
+
+export interface Block {
+  id: string;
+  type: BlockType;
+  content: string;
+  language?: string;
+  checked?: boolean;
+}
 
 export function parseInlineMarkdown(text: string): string {
   // Use the full parser's inline engine → convert to HTML
@@ -34,6 +42,12 @@ function renderInlineNodesToHtml(nodes: InlineNode[]): string {
           return `<code class="inline-code" style="${inlineCodeStyle}">${escHtml(node.value)}</code>`;
         case "link":
           return `<a href="${escHtml(node.href)}">${renderInlineNodesToHtml(node.children)}</a>`;
+        case "wikilink": {
+          const label = escHtml(node.alias ?? node.target);
+          const inner = node.alias ? `${node.target}|${node.alias}` : node.target;
+          const raw = `${node.embed ? "!" : ""}[[${inner}]]`;
+          return `<a href="#" data-wikilink="${escHtml(node.target)}" title="${escHtml(raw)}">${label}</a>`;
+        }
         case "image":
           return `<img src="${escHtml(node.src)}" alt="${escHtml(node.alt)}" />`;
         case "highlight":
@@ -70,7 +84,7 @@ export function parseMarkdownToBlocks(markdown: string): Block[] {
   return ast.flatMap((node) => astToBlocks(node));
 }
 
-function astToBlocks(node: import("./markdown/ast").BlockNode): Block[] {
+function astToBlocks(node: import("./ast").BlockNode): Block[] {
   switch (node.type) {
     case "heading": {
       const level = Math.min(node.level, 4);
@@ -139,17 +153,7 @@ function astToBlocks(node: import("./markdown/ast").BlockNode): Block[] {
       ];
     case "table":
       return [
-        {
-          id: crypto.randomUUID(),
-          type: "table_block" as BlockType,
-          content: "",
-          tableData: [
-            node.head.cells.map((cell) => inlineToPlain(cell.children)),
-            ...node.rows.map((row) =>
-              row.cells.map((cell) => inlineToPlain(cell.children)),
-            ),
-          ],
-        },
+        { id: crypto.randomUUID(), type: "paragraph", content: "[table]" },
       ];
     default:
       return [];
@@ -173,6 +177,8 @@ function inlineToPlain(nodes: InlineNode[]): string {
           return n.value;
         case "link":
           return inlineToPlain(n.children);
+        case "wikilink":
+          return n.alias ?? n.target;
         case "image":
           return n.alt;
         case "emoji":
@@ -190,7 +196,7 @@ function inlineToPlain(nodes: InlineNode[]): string {
     .join("");
 }
 
-function blockToPlain(node: import("./markdown/ast").BlockNode): string {
+function blockToPlain(node: import("./ast").BlockNode): string {
   switch (node.type) {
     case "paragraph":
       return inlineToPlain(node.children);

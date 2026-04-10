@@ -1,32 +1,37 @@
-# syntax=docker/dockerfile:1.7
-
-FROM node:24-alpine AS base
+FROM node:22-alpine AS deps
 WORKDIR /app
-ENV npm_config_fund=false
-ENV npm_config_audit=false
-ENV npm_config_update_notifier=false
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-FROM base AS deps
-COPY package.json ./
-RUN --mount=type=cache,target=/root/.npm npm install --include=dev
+# Copy only dependency manifests first to maximize cache reuse.
+COPY package.json pnpm-lock.yaml* ./
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+  if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
 
-FROM deps AS build
-COPY tsconfig.json markdown.ts ./
-COPY markdown ./markdown
-RUN npm run build
+FROM node:22-alpine AS build
+WORKDIR /app
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-FROM base AS prod
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN pnpm run build
+
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/dist ./dist
-COPY playground/server.js ./playground/server.js
-COPY playground/public ./playground/public
-EXPOSE 3000
-CMD ["node", "playground/server.js"]
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-FROM deps AS dev
-WORKDIR /app
-ENV NODE_ENV=development
-COPY . .
-EXPOSE 3000
-CMD ["npm", "run", "dev"]
+# Install only production dependencies in the final image.
+COPY package.json pnpm-lock.yaml* ./
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+  if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile --prod; else pnpm install --prod; fi
+
+COPY --from=build /app/dist ./dist
+
+USER node
+CMD ["node", "dist/index.js"]

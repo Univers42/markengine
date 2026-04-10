@@ -1,5 +1,20 @@
 // Markdown shortcuts — block detection and shortcut map
-import type { BlockType } from '../../types/database';
+export type BlockType =
+  | 'paragraph'
+  | 'heading_1'
+  | 'heading_2'
+  | 'heading_3'
+  | 'heading_4'
+  | 'heading_5'
+  | 'heading_6'
+  | 'bulleted_list'
+  | 'numbered_list'
+  | 'to_do'
+  | 'quote'
+  | 'toggle'
+  | 'code'
+  | 'divider'
+  | 'callout';
 
 export interface BlockDetection {
   type: BlockType;
