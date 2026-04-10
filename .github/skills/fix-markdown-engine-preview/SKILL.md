@@ -14,3 +14,7 @@ El bloque de código en el preview del playground no aplica colores según el le
 - **Objetivo:** Revisar la lógica de renderizado de bloques de código.
 - **Acción:** Asegurar que el motor identifique el lenguaje especificado en el bloque de Markdown y aplique las clases o estilos de resaltado de sintaxis correspondientes.
 
+### 2. Renderizado de Tablas
+Las tablas se renderizan sin bordes ni estilos, lo que dificulta su lectura.
+- **Objetivo:** Implementar estilos CSS para mejorar la legibilidad de las tablas.
+- **Acción:** Añadir estilos que incluyan bordes, espaciado y un diseño más claro para las tablas renderizadas en el preview.

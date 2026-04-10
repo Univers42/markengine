@@ -71,6 +71,18 @@ def hola_mundo():
     return True
 \`\`\`
 
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Backend | NestJS | 11 |
+| Frontend | React + Vite | 19 / 6 |
+| Language | TypeScript strict | 5.7 |
+| ORM | Prisma | 7 |
+| Database | PostgreSQL | 16 |
+| Cache / Pub-Sub | Redis | 7 |
+| Package manager | pnpm workspaces | 10 |
+| Reverse proxy | nginx | — |
+| Containerization | Docker Compose | — |
+| Styling | SCSS design system | — |
 
 > [!tip] tip
 > Keep working on the MVP
