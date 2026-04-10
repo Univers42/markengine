@@ -5,7 +5,7 @@ const sampleButton = document.querySelector("#sample-button");
 const clearButton = document.querySelector("#clear-button");
 
 const HIGHLIGHT_JS_SRC =
-  "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/highlight.min.js";
+  "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js";
 const MERMAID_SRC =
   "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
 
