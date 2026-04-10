@@ -176,6 +176,14 @@ button.secondary {
   letter-spacing: -0.03em;
 }
 
+.preview .md-heading-active::before {
+  content: attr(data-marker) " ";
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.75em;
+  letter-spacing: 0;
+}
+
 .preview p,
 .preview li,
 .preview blockquote {
@@ -291,6 +299,16 @@ button.secondary {
   font-weight: 700;
 }
 
+.preview .md-callout-title::before {
+  content: "ℹ";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .preview .md-callout > :last-child {
   margin-bottom: 0;
 }
@@ -306,10 +324,23 @@ button.secondary {
   background: rgba(52, 211, 153, 0.08);
 }
 
+.preview .md-callout-tip .md-callout-title::before {
+  content: "💡";
+}
+
+.preview .md-callout-success .md-callout-title::before {
+  content: "✅";
+}
+
 .preview .md-callout-warning,
 .preview .md-callout-caution {
   border-left-color: #f59e0b;
   background: rgba(245, 158, 11, 0.08);
+}
+
+.preview .md-callout-warning .md-callout-title::before,
+.preview .md-callout-caution .md-callout-title::before {
+  content: "⚠";
 }
 
 .preview .md-callout-error,
@@ -318,11 +349,28 @@ button.secondary {
   background: rgba(248, 113, 113, 0.08);
 }
 
+.preview .md-callout-error .md-callout-title::before,
+.preview .md-callout-danger .md-callout-title::before {
+  content: "⛔";
+}
+
 .preview .md-callout-faq,
 .preview .md-callout-example,
 .preview .md-callout-todo {
   border-left-color: var(--accent-2);
   background: rgba(167, 139, 250, 0.08);
+}
+
+.preview .md-callout-faq .md-callout-title::before {
+  content: "❓";
+}
+
+.preview .md-callout-todo .md-callout-title::before {
+  content: "☐";
+}
+
+.preview .md-callout-example .md-callout-title::before {
+  content: "📌";
 }
 
 .preview blockquote {

@@ -5,7 +5,7 @@ const sampleButton = document.querySelector("#sample-button");
 const clearButton = document.querySelector("#clear-button");
 
 const HIGHLIGHT_JS_SRC =
-  "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/lib/highlight.min.js";
+  "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/highlight.min.js";
 const MERMAID_SRC =
   "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
 
@@ -73,18 +73,22 @@ def hola_mundo():
 
 
 > [!tip] tip
+> Keep working on the MVP
 
 > [!note] note
+> Finish the MVP
 
 > [!error] error
-
-> [!tip] tip
+> The MVP is not finished
 
 > [!faq] faq
+> FAQ me
 
 > [!todo] todo
+> Finish the MVP
 
 > [!example] example
+> Example me that MVP
 
 
 \`\`\`mermaid
@@ -148,6 +152,7 @@ async function render() {
   ast.textContent = JSON.stringify(data.ast, null, 2);
 
   await enhancePreview(preview);
+  syncHeadingFocusFromCursor();
 }
 
 async function enhancePreview(root) {
@@ -268,6 +273,53 @@ async function renderMermaidBlocks(root) {
       node.innerHTML = `<pre class="error">${escapeHtml(message)}</pre>`;
     }
   }
+}
+
+function parseHeadingLine(line) {
+  const match = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    marker: match[1],
+    level: match[1].length,
+    text: normalizeHeadingText(match[2]),
+  };
+}
+
+function normalizeHeadingText(value) {
+  return value.trim().replaceAll(/\s+/g, " ");
+}
+
+function clearActiveHeadingMarker() {
+  const active = preview.querySelectorAll(".md-heading-active");
+  for (const node of active) {
+    node.classList.remove("md-heading-active");
+    delete node.dataset.marker;
+  }
+}
+
+function syncHeadingFocusFromCursor() {
+  clearActiveHeadingMarker();
+
+  const { line } = getCurrentLineInfo();
+  const heading = parseHeadingLine(line);
+  if (!heading) {
+    return;
+  }
+
+  const candidates = Array.from(preview.querySelectorAll(`h${heading.level}`));
+  const target = candidates.find(
+    (node) => normalizeHeadingText(node.textContent || "") === heading.text,
+  );
+
+  if (!target) {
+    return;
+  }
+
+  target.classList.add("md-heading-active");
+  target.dataset.marker = heading.marker;
 }
 
 function escapeHtml(value) {
@@ -433,6 +485,8 @@ function handleEnterInList(event) {
 }
 
 editor.addEventListener("input", scheduleRender);
+editor.addEventListener("click", syncHeadingFocusFromCursor);
+editor.addEventListener("keyup", syncHeadingFocusFromCursor);
 editor.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     handleEnterInList(event);
