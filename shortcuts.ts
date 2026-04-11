@@ -1,5 +1,5 @@
 // Markdown shortcuts — inline parsing and block conversion
-import type { BlockType, Block } from "../../types/database";
+import type { BlockType, Block } from "../../entities/block";
 import type { InlineNode } from "./markdown/ast";
 import { parse, parseInline } from "./markdown/parser";
 

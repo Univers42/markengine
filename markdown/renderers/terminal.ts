@@ -64,12 +64,10 @@ function renderBlock(node: BlockNode, ctx: RenderCtx): string {
     }
 
     case 'unordered_list':
-      return node.children.map((item, _i) => {
+      return node.children.map((item) => {
         const bullet = `${c(ctx, C.listBullet)}•${reset(ctx)}`;
         const innerCtx: RenderCtx = { ...ctx, depth: ctx.depth + 1 };
         const body = item.children.map(ch => renderBlock(ch, innerCtx)).join('').trimEnd();
-        // Replace first line's indent with bullet
-        const _firstLinePrefix = ind(ctx) + ' ';
         const lines = body.split('\n');
         if (lines[0]) {
           lines[0] = `${prefix}${bullet} ${lines[0].trimStart()}`;
