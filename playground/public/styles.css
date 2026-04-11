@@ -190,6 +190,48 @@ button.secondary {
   color: var(--text);
 }
 
+.preview table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.preview thead {
+  background: rgba(125, 211, 252, 0.1);
+}
+
+.preview th,
+.preview td {
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.62rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.preview tr > :last-child {
+  border-right: 0;
+}
+
+.preview tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.preview th {
+  font-weight: 700;
+  color: #dbeafe;
+}
+
+.preview tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .preview a {
   color: var(--accent);
 }
@@ -412,5 +454,11 @@ button.secondary {
   #ast {
     min-height: 48vh;
     height: auto;
+  }
+
+  .preview table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 }
