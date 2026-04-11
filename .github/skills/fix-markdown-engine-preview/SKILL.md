@@ -18,3 +18,8 @@ El bloque de código en el preview del playground no aplica colores según el le
 Las tablas se renderizan sin bordes ni estilos, lo que dificulta su lectura.
 - **Objetivo:** Implementar estilos CSS para mejorar la legibilidad de las tablas.
 - **Acción:** Añadir estilos que incluyan bordes, espaciado y un diseño más claro para las tablas renderizadas en el preview.
+
+### 3. Uso de libraría de Emojis 
+Se ha añadido una libraría de emojis que debe ser utilizada para renderizar emojis correctamente en el preview del playground.
+- **Objetivo:** Implementar la nueva librería soporte para emojis para sustituir el renderizado actual con el mapa de emojis.
+- **Acción:** Integrar una libraría de emojis que permita la representación correcta de emojis en el preview del playground.

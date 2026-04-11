@@ -8,12 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@univers42/ui-collection':
+        specifier: ^1.0.0
+        version: 1.0.1(react@19.2.5)
       react:
         specifier: ^19.1.0
         version: 19.2.5
     devDependencies:
       '@types/node':
-        specifier: ^22.15.3
+        specifier: ^22.19.17
         version: 22.19.17
       '@types/react':
         specifier: ^19.1.2
@@ -436,6 +439,11 @@ packages:
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+
+  '@univers42/ui-collection@1.0.1':
+    resolution: {integrity: sha512-MAsZJzrfKxfI2wTv0BJqYdZo/dQH9u3HFMe8Kf0TYsIJNQjlm8gDVvXm0/GCRTkJ69H4DtH4q8cAboZkV4fOHw==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
@@ -868,6 +876,10 @@ snapshots:
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
+
+  '@univers42/ui-collection@1.0.1(react@19.2.5)':
+    dependencies:
+      react: 19.2.5
 
   ansi-regex@5.0.1: {}
 
