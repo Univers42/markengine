@@ -1,161 +1,101 @@
-# Markdown Engine (TypeScript, AST-First)
+# Markdown Engine
 
-This project now uses a modular, AST-first Markdown pipeline designed for speed and incremental updates.
+This repository contains a small Markdown engine centered on a canonical `src/` implementation. The goal is maintainability first: a clear parser boundary, a typed AST, predictable incremental updates, and a renderer that stays independent from parsing.
 
-## Goals
+## Current Architecture
 
-- Keep parsing linear and predictable.
-- Separate responsibilities into small modules.
-- Support partial re-parsing for interactive editing.
-- Keep rendering independent from parsing.
-- Reuse existing CSS themes for presentation.
+The runtime path is split into these layers:
 
-## Architecture
+1. Parser core
 
-The engine is split into four main passes/modules:
+- [src/block-parser.ts](../src/block-parser.ts): block-level parsing and block assembly.
+- [src/inline-parser.ts](../src/inline-parser.ts): inline tokenization and nesting.
+- [src/types.ts](../src/types.ts): AST, result, span, and diagnostic contracts.
 
-1. Block pass
+2. Renderer
 
-- File: `src/block-parser.ts`
-- Parses line stream into block nodes.
-- Handles fences, headings, lists, blockquotes, paragraphs, thematic breaks.
+- [src/renderer.ts](../src/renderer.ts): converts the AST to semantic HTML.
+- Rendering stays pure and consumes the AST only; it does not re-parse input.
 
-2. Inline pass
+3. Incremental updates
 
-- File: `src/inline-parser.ts`
-- Character scanner for inline syntax.
-- Handles emphasis, strong, code spans, links, text.
-- Designed to avoid global regex backtracking behavior.
+- [src/incremental.ts](../src/incremental.ts): applies line-range patches, reparses, and reports changed node ids plus diagnostics.
 
-3. AST model
+4. Public API
 
-- File: `src/types.ts`
-- Diff-friendly node schema with stable ids and source spans.
-- Supports nested blocks (e.g. list in quote).
+- [markdown.ts](../markdown.ts): facade for consumers.
 
-4. Renderer
+## AST Contract
 
-- File: `src/renderer.ts`
-- Converts AST to semantic HTML with node ids on elements.
-- Output is style-agnostic and can use your CSS themes.
+Each document parse returns a `DocumentNode` with:
 
-Incremental updates:
+- `id`: stable document id
+- `kind`: `document`
+- `version`: caller-supplied document version
+- `children`: block nodes
+- `span`: source coordinates
 
-- File: `src/incremental.ts`
-- Applies a line-range patch, reparses, and reports changed node ids.
+Block and inline nodes also carry:
 
-Public API:
-
-- File: `markdown.ts`
-- Re-exports parser modules + provides `compileMarkdownToHtml`.
-
-## AST Design
-
-### Why this works for performance
-
-Each node stores:
-
-- `id`: stable hash-based id for diffing
+- `id`: stable node id for diffing and incremental updates
 - `kind`: node category
-- `span`: line and offset coordinates in source
+- `span`: source coordinates
 
-This allows focused updates:
+Parse results also include:
 
-- If one block changes, only affected node ids change.
-- The renderer can update only matching DOM regions.
+- `blockIndex`: block spans for incremental diffing
+- `diagnostics`: warnings/errors for malformed or ambiguous input
 
-### Core node families
+## Parsing Strategy
 
-- Block nodes:
-  - `paragraph`
-  - `heading`
-  - `code_block`
-  - `list`
-  - `list_item`
-  - `blockquote`
-  - `thematic_break`
-- Inline nodes:
-  - `text`
-  - `emphasis`
-  - `strong`
-  - `code_span`
-  - `link`
+The parser uses a straightforward staged approach:
 
-## Fast Parsing Strategy
+1. Identify block boundaries.
+2. Parse structural block nodes.
+3. Parse inline content inside textual blocks.
 
-### Two-pass model
+This keeps the implementation easier to reason about than a large monolithic dispatcher and gives us a clean place to add validation and recovery later.
 
-1. Block segmentation pass:
+## Incremental Updates
 
-- Detect block boundaries and block types in a single traversal.
+Incremental parsing is currently line-range based:
 
-2. Inline parsing pass:
+- apply the patch to the previous text
+- reparse the document
+- compare block index entries
+- return changed node ids plus diagnostics
 
-- Parse only textual payload of block nodes.
-
-### Complexity profile
-
-- Full parse: approximately O(n) over input size.
-- Incremental edit flow:
-  - patch lines
-  - reparse document
-  - compare block index ids to detect changed blocks
-
-This is a pragmatic baseline for interactive editors.
-
-## Module Layout
-
-- `markdown.ts`: public entry and convenience compile function
-- `src/types.ts`: AST contracts and parse result types
-- `src/utils.ts`: stable ids, escaping, line splitting helpers
-- `src/block-parser.ts`: block-level parser
-- `src/inline-parser.ts`: inline scanner parser
-- `src/renderer.ts`: AST to HTML renderer
-- `src/incremental.ts`: patch + incremental parse helpers
+That is a pragmatic baseline for editor integration. It is not yet a fine-grained AST diff engine, but it is deterministic and easy to verify.
 
 ## Usage
 
 ```ts
 import {
-  parseMarkdown,
-  renderHtml,
   compileMarkdownToHtml,
   incrementalParse,
+  parseMarkdown,
 } from "./markdown";
 
-const source = `# Title\n\nA *fast* **AST** engine.`;
+const parsed = parseMarkdown("# Title\n\nA *fast* engine.", {
+  documentVersion: 1,
+});
 
-const parsed = parseMarkdown(source, { documentVersion: 1 });
-const html = renderHtml(parsed.ast);
+const compiled = compileMarkdownToHtml("# Title\n\nA *fast* engine.");
 
-const compiled = compileMarkdownToHtml(source);
-
-const next = incrementalParse(source, parsed, {
+const next = incrementalParse("# Title\n\nA *fast* engine.", parsed, {
   fromLine: 2,
   toLine: 2,
-  text: "A *very fast* **AST** engine.",
+  text: "A *very fast* engine.",
 });
-console.log(next.changedNodeIds);
 ```
 
-## Styling
+## Design Direction
 
-The renderer produces semantic HTML (`h1..h6`, `p`, `blockquote`, `ul/ol/li`, `pre/code`, `hr`, `a`, `em`, `strong`).
+The next steps for the engine are:
 
-You can style output with:
+- deeper malformed-input diagnostics
+- stronger inline recovery
+- more regression coverage for edge cases
+- a cleaner adapter layer for future output targets
 
-- `theme.css`
-- `covers/*.css`
-
-Recommended workflow:
-
-- Keep parser and renderer free of style logic.
-- Apply CSS themes at the host app level.
-
-## Next Steps
-
-- Add nested list parsing by indentation depth.
-- Add inline escape handling (`\*`, `\[`, etc.).
-- Add table and callout block support.
-- Add block-local incremental reparsing (only impacted ranges) for larger files.
-- Add benchmark and golden-file tests for regression safety.
+The current baseline intentionally favors clarity and correctness over feature breadth.

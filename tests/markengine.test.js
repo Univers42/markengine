@@ -83,6 +83,36 @@ test("supports incremental reparsing", () => {
   assert.match(renderHtml(next.ast), /very fast/);
 });
 
+test("reports a diagnostic for an unterminated code fence", () => {
+  const result = parseMarkdown("```ts\nconsole.log('x');\n");
+
+  assert.equal(result.diagnostics.length, 1);
+  assert.equal(result.diagnostics[0].code, "UNTERMINATED_FENCE");
+  assert.equal(result.diagnostics[0].severity, "warning");
+});
+
+test("clamps invalid incremental patch ranges and reports diagnostics", () => {
+  const previousText = "# Title\n\nBody";
+  const previousResult = parseMarkdown(previousText, { documentVersion: 1 });
+
+  const next = incrementalParse(previousText, previousResult, {
+    fromLine: 8,
+    toLine: 2,
+    text: "Replacement",
+  });
+
+  assert.ok(
+    next.diagnostics.some(
+      (diagnostic) => diagnostic.code === "PATCH_RANGE_SWAPPED",
+    ),
+  );
+  assert.ok(
+    next.diagnostics.some(
+      (diagnostic) => diagnostic.code === "PATCH_RANGE_CLAMPED",
+    ),
+  );
+});
+
 test("parses ordered and unordered list shapes", () => {
   const result = parseMarkdown(["1. one", "2. two", "", "- three"].join("\n"));
 
