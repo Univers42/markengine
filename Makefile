@@ -20,7 +20,7 @@ COMPOSE := $(DOCKER) compose
 
 .PHONY: \
 	help setup deps reinstall doctor \
-	build-engine build dev start playground preview test typecheck py-check lint check ci \
+	build-engine run-ci build dev start playground preview test typecheck py-check lint check ci \
 	pdf clean clean-all \
 	docker-build docker-prod docker-dev docker-stop docker-rm docker-logs
 .DEFAULT_GOAL := help
@@ -84,8 +84,14 @@ check: ## Run all validation checks
 	@$(MAKE) -s doctor
 	@$(MAKE) -s deps
 	@$(MAKE) -s lint
+	@$(MAKE) -s typecheck
 	@$(MAKE) -s test
 	@echo -e "$(SUCCESS) Validation complete$(RESET)"
+
+run-ci: ## Run all checks without extra output (for CI pipelines)
+	@$(MAKE) -s lint
+	@$(MAKE) -s typecheck
+	@echo -e "$(SUCCESS) CI checks passed$(RESET)"
 
 build: ## Build engine + Vite assets
 	@echo -e "$(INFO) Building project...$(RESET)"
