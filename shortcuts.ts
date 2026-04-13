@@ -129,22 +129,28 @@ function astToBlocks(node: import("./markdown/ast").BlockNode): Block[] {
         content: item.children.map((c) => blockToMarkdown(c)).join("\n"),
         checked: item.checked,
       }));
-    case 'callout':
-      return [{
-        id: crypto.randomUUID(),
-        type: 'callout' as BlockType,
-        content: node.children.map(c => blockToMarkdown(c)).join('\n'),
-      }];
-    case 'table':
-      return [{
-        id: crypto.randomUUID(),
-        type: 'table_block',
-        content: '',
-        tableData: [
-          node.head.cells.map(cell => inlineToPlain(cell.children)),
-          ...node.rows.map(row => row.cells.map(cell => inlineToPlain(cell.children))),
-        ],
-      }];
+    case "callout":
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: "callout" as BlockType,
+          content: node.children.map((c) => blockToMarkdown(c)).join("\n"),
+        },
+      ];
+    case "table":
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: "table_block",
+          content: "",
+          tableData: [
+            node.head.cells.map((cell) => inlineToPlain(cell.children)),
+            ...node.rows.map((row) =>
+              row.cells.map((cell) => inlineToPlain(cell.children)),
+            ),
+          ],
+        },
+      ];
     default:
       return [];
   }
