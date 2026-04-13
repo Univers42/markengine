@@ -8,6 +8,8 @@ export function renderTable(
   o: any,
   key: number | string,
 ): React.ReactElement {
+  const blockState =
+    typeof o.blockState === "string" ? o.blockState : undefined;
   const alignStyle = (i: number): React.CSSProperties | undefined => {
     const a = node.alignments[i];
     return a ? { textAlign: a } : undefined;
@@ -52,7 +54,12 @@ export function renderTable(
     ),
   );
 
-  return React.createElement("table", { key }, thead, tbody);
+  return React.createElement(
+    "table",
+    { key, "data-block-state": blockState },
+    thead,
+    tbody,
+  );
 }
 
 // INLINE RENDERING

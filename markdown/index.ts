@@ -50,21 +50,32 @@ export type {
   TableCellNode,
   TableAlign,
   DefinitionItem,
-} from './ast';
-export { isInlineNode, isBlockNode } from './ast';
+} from "./ast";
+export { isInlineNode, isBlockNode } from "./ast";
 
 // ─── Parser ──────────────────────────────────────────────────────────────────
-export { parse, parseInline } from './parser';
+export { parse, parseInline } from "./parser";
 
 // ─── Renderers ───────────────────────────────────────────────────────────────
-export { renderHtml } from './renderers/html';
-export type { HtmlRenderOptions } from './renderers/html';
+export { renderHtml } from "./renderers/html";
+export type { HtmlRenderOptions } from "./renderers/html";
 
-export { renderReact, MarkdownView } from './renderers/react';
-export type { ReactRenderOptions } from './renderers/react';
+export { renderReact, MarkdownView } from "./renderers/react";
+export type { ReactRenderOptions } from "./renderers/react";
 
-export { renderTerminal } from './renderers/terminal';
-export type { TerminalRenderOptions } from './renderers/terminal';
+export { renderTerminal } from "./renderers/terminal";
+export type { TerminalRenderOptions } from "./renderers/terminal";
+
+export {
+  resolveMarkdownMode,
+  SourceMode,
+  LivePreviewMode,
+  ReadingMode,
+} from "./renderers/renderMode";
+export type {
+  MarkdownModeState,
+  MarkdownViewMode,
+} from "./renderers/renderMode";
 
 // ─── Shortcuts (backwards compatible with old markdownEngine) ────────────────
 export {
@@ -72,5 +83,5 @@ export {
   parseInlineMarkdown,
   parseMarkdownToBlocks,
   BLOCK_SHORTCUTS,
-} from './shortcuts';
-export type { BlockDetection } from './shortcuts';
+} from "./shortcuts";
+export type { BlockDetection } from "./shortcuts";
