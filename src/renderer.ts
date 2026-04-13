@@ -5,7 +5,16 @@ import {
   ListItemNode,
   ListNode,
 } from "./types";
+import {
+  resolveMarkdownMode,
+  type MarkdownModeState,
+  type MarkdownViewMode,
+} from "./render-mode";
 import { escapeHtml } from "./utils";
+
+export interface RenderHtmlOptions {
+  mode?: MarkdownViewMode;
+}
 
 function renderInlines(nodes: InlineNode[]): string {
   return nodes
@@ -28,46 +37,55 @@ function renderInlines(nodes: InlineNode[]): string {
     .join("");
 }
 
-function renderListItem(item: ListItemNode): string {
+function renderListItem(item: ListItemNode, state: MarkdownModeState): string {
+  const blockStateAttr = ` data-block-state="${state.getBlockState()}"`;
   const checkedAttr =
     typeof item.checked === "boolean"
       ? ` data-checked="${String(item.checked)}"`
       : "";
-  const content = item.children.map(renderBlock).join("");
-  return `<li data-node-id="${item.id}"${checkedAttr}>${content}</li>`;
+  const content = item.children
+    .map((node) => renderBlock(node, state))
+    .join("");
+  return `<li data-node-id="${item.id}"${blockStateAttr}${checkedAttr}>${content}</li>`;
 }
 
-function renderList(node: ListNode): string {
+function renderList(node: ListNode, state: MarkdownModeState): string {
   const tag = node.ordered ? "ol" : "ul";
   const start = node.ordered && node.start > 1 ? ` start="${node.start}"` : "";
-  return `<${tag} data-node-id="${node.id}"${start}>${node.items.map(renderListItem).join("")}</${tag}>`;
+  const blockStateAttr = ` data-block-state="${state.getBlockState()}"`;
+  return `<${tag} data-node-id="${node.id}"${blockStateAttr}${start}>${node.items.map((item) => renderListItem(item, state)).join("")}</${tag}>`;
 }
 
-function renderBlock(node: BlockNode): string {
+function renderBlock(node: BlockNode, state: MarkdownModeState): string {
+  const blockStateAttr = ` data-block-state="${state.getBlockState()}"`;
   switch (node.kind) {
     case "paragraph":
-      return `<p data-node-id="${node.id}">${renderInlines(node.children)}</p>`;
+      return `<p data-node-id="${node.id}"${blockStateAttr}>${renderInlines(node.children)}</p>`;
     case "heading":
-      return `<h${node.depth} data-node-id="${node.id}">${renderInlines(node.children)}</h${node.depth}>`;
+      return `<h${node.depth} data-node-id="${node.id}"${blockStateAttr}>${renderInlines(node.children)}</h${node.depth}>`;
     case "code_block": {
       const languageClass = node.language
         ? ` language-${escapeHtml(node.language)}`
         : "";
-      return `<pre data-node-id="${node.id}" class="md-code-block${languageClass}"><code>${escapeHtml(node.value)}</code></pre>`;
+      return `<pre data-node-id="${node.id}"${blockStateAttr} class="md-code-block${languageClass}"><code>${escapeHtml(node.value)}</code></pre>`;
     }
     case "list":
-      return renderList(node);
+      return renderList(node, state);
     case "blockquote":
-      return `<blockquote data-node-id="${node.id}">${node.children.map(renderBlock).join("")}</blockquote>`;
+      return `<blockquote data-node-id="${node.id}"${blockStateAttr}>${node.children.map((child) => renderBlock(child, state)).join("")}</blockquote>`;
     case "thematic_break":
-      return `<hr data-node-id="${node.id}" />`;
+      return `<hr data-node-id="${node.id}"${blockStateAttr} />`;
     case "list_item":
-      return renderListItem(node);
+      return renderListItem(node, state);
     default:
       return "";
   }
 }
 
-export function renderHtml(ast: DocumentNode): string {
-  return ast.children.map(renderBlock).join("\n");
+export function renderHtml(
+  ast: DocumentNode,
+  options: RenderHtmlOptions = {},
+): string {
+  const state = resolveMarkdownMode(options.mode);
+  return ast.children.map((node) => renderBlock(node, state)).join("\n");
 }
