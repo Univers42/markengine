@@ -1,5 +1,10 @@
 export type MarkdownViewMode = "source" | "live-preview" | "reading";
 
+export type MarkdownModeResolver<TNode> = (
+  index: number,
+  node: TNode,
+) => MarkdownViewMode | undefined;
+
 export interface MarkdownModeState {
   readonly name: MarkdownViewMode;
   getBlockState(): MarkdownViewMode;
@@ -54,4 +59,15 @@ export function resolveMarkdownMode(
     default:
       return new ReadingMode();
   }
+}
+
+export function resolveIndexedMarkdownMode<TNode>(
+  fallbackMode: MarkdownViewMode | undefined,
+  index: number,
+  node: TNode,
+  indexedModes?: readonly MarkdownViewMode[],
+  resolver?: MarkdownModeResolver<TNode>,
+): MarkdownModeState {
+  const mode = resolver?.(index, node) ?? indexedModes?.[index] ?? fallbackMode;
+  return resolveMarkdownMode(mode);
 }

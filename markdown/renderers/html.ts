@@ -4,7 +4,9 @@
 
 import type { BlockNode, InlineNode } from "../ast";
 import {
+  resolveIndexedMarkdownMode,
   resolveMarkdownMode,
+  type MarkdownModeResolver,
   type MarkdownModeState,
   type MarkdownViewMode,
 } from "./renderMode";
@@ -15,6 +17,8 @@ export interface HtmlRenderOptions {
   classPrefix?: string;
   sanitizeHtml?: boolean;
   mode?: MarkdownViewMode;
+  blockModes?: MarkdownViewMode[];
+  resolveBlockMode?: MarkdownModeResolver<BlockNode>;
 }
 
 const defaults: Required<HtmlRenderOptions> = {
@@ -31,7 +35,18 @@ export function renderHtml(
 ): string {
   const o = { ...defaults, ...opts };
   const modeState = resolveMarkdownMode(o.mode);
-  const inner = blocks.map((b) => renderBlock(b, o, modeState)).join("\n");
+  const inner = blocks
+    .map((block, index) => {
+      const blockState = resolveIndexedMarkdownMode(
+        o.mode,
+        index,
+        block,
+        o.blockModes,
+        o.resolveBlockMode,
+      );
+      return renderBlock(block, o, blockState);
+    })
+    .join("\n");
   if (o.wrapperClass) {
     return `<article class="${esc(o.wrapperClass)}" data-mode="${modeState.name}">\n${inner}\n</article>`;
   }

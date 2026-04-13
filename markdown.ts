@@ -10,10 +10,12 @@ import {
 } from "./src/source-renderer";
 import { incrementalParse as incrementalParseFromSource } from "./src/incremental";
 import {
+  resolveIndexedMarkdownMode,
   resolveMarkdownMode,
   ReadingMode,
   LivePreviewMode,
   SourceMode,
+  type MarkdownModeResolver,
   type MarkdownModeState,
   type MarkdownViewMode,
 } from "./src/render-mode";
@@ -37,7 +39,11 @@ export type {
 } from "./src/types";
 export type { SourceRenderOptions } from "./src/source-renderer";
 export type { RenderHtmlOptions } from "./src/renderer";
-export type { MarkdownModeState, MarkdownViewMode } from "./src/render-mode";
+export type {
+  MarkdownModeResolver,
+  MarkdownModeState,
+  MarkdownViewMode,
+} from "./src/render-mode";
 export { ReadingMode, LivePreviewMode, SourceMode } from "./src/render-mode";
 
 export function parseMarkdown(
@@ -97,6 +103,22 @@ export function compileMarkdownToSourceView(
 
 export function resolveModeState(mode?: MarkdownViewMode): MarkdownModeState {
   return resolveMarkdownMode(mode);
+}
+
+export function resolveIndexedModeState<TNode>(
+  fallbackMode: MarkdownViewMode | undefined,
+  index: number,
+  node: TNode,
+  indexedModes?: readonly MarkdownViewMode[],
+  resolver?: MarkdownModeResolver<TNode>,
+): MarkdownModeState {
+  return resolveIndexedMarkdownMode(
+    fallbackMode,
+    index,
+    node,
+    indexedModes,
+    resolver,
+  );
 }
 
 export function incrementalParse(

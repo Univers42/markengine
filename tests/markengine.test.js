@@ -176,3 +176,31 @@ test("tags rendered html blocks with mode state", () => {
 
   assert.match(result.html, /data-block-state="reading"/);
 });
+
+test("mixes source, live-preview, and reading states per html block", () => {
+  const source = "# Title\n\nParagraph\n\n> Quote";
+  const result = compileMarkdownToHtml(
+    source,
+    {},
+    {
+      mode: "reading",
+      blockModes: ["source", "live-preview", "reading"],
+    },
+  );
+
+  assert.match(result.html, /data-block-state="source"/);
+  assert.match(result.html, /data-block-state="live-preview"/);
+  assert.match(result.html, /data-block-state="reading"/);
+});
+
+test("mixes source view states per line", () => {
+  const html = renderSource("# Title\n- task\nParagraph", {
+    mode: "reading",
+    lineModes: ["source", "live-preview", "reading"],
+  });
+
+  assert.match(html, /data-block-state="source"/);
+  assert.match(html, /data-block-state="live-preview"/);
+  assert.match(html, /data-block-state="reading"/);
+  assert.match(html, /md-src-symbol-hidden/);
+});
