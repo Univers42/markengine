@@ -176,10 +176,60 @@ button.secondary {
   letter-spacing: -0.03em;
 }
 
+.preview .md-heading-active::before {
+  content: attr(data-marker) " ";
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.75em;
+  letter-spacing: 0;
+}
+
 .preview p,
 .preview li,
 .preview blockquote {
   color: var(--text);
+}
+
+.preview table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.preview thead {
+  background: rgba(125, 211, 252, 0.1);
+}
+
+.preview th,
+.preview td {
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.62rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.preview tr > :last-child {
+  border-right: 0;
+}
+
+.preview tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.preview th {
+  font-weight: 700;
+  color: #dbeafe;
+}
+
+.preview tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .preview a {
@@ -189,6 +239,13 @@ button.secondary {
 .preview code {
   font-family: var(--mono);
   font-size: 0.92em;
+}
+
+.preview pre code.hljs {
+  display: block;
+  padding: 0;
+  color: var(--text);
+  background: transparent;
 }
 
 .preview .md-inline-code,
@@ -205,6 +262,157 @@ button.secondary {
 .preview pre {
   padding: 16px;
   overflow: auto;
+}
+
+.preview .hljs {
+  color: var(--text);
+}
+
+.preview .hljs-comment,
+.preview .hljs-quote {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.preview .hljs-keyword,
+.preview .hljs-selector-tag,
+.preview .hljs-literal,
+.preview .hljs-doctag {
+  color: #f472b6;
+}
+
+.preview .hljs-title,
+.preview .hljs-section,
+.preview .hljs-name,
+.preview .hljs-built_in {
+  color: #fbbf24;
+}
+
+.preview .hljs-string,
+.preview .hljs-attr,
+.preview .hljs-symbol,
+.preview .hljs-bullet {
+  color: #7dd3fc;
+}
+
+.preview .hljs-number,
+.preview .hljs-regexp,
+.preview .hljs-variable,
+.preview .hljs-template-variable {
+  color: #c084fc;
+}
+
+.preview .hljs-strong {
+  font-weight: 700;
+}
+
+.preview .hljs-emphasis {
+  font-style: italic;
+}
+
+.preview .md-mermaid {
+  margin: 1rem 0;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.preview .md-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview .md-callout {
+  margin: 1rem 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.preview .md-callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+}
+
+.preview .md-callout-title::before {
+  content: "ℹ";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.preview .md-callout > :last-child {
+  margin-bottom: 0;
+}
+
+.preview .md-callout-note {
+  border-left-color: var(--accent);
+  background: rgba(125, 211, 252, 0.08);
+}
+
+.preview .md-callout-tip,
+.preview .md-callout-success {
+  border-left-color: #34d399;
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.preview .md-callout-tip .md-callout-title::before {
+  content: "💡";
+}
+
+.preview .md-callout-success .md-callout-title::before {
+  content: "✅";
+}
+
+.preview .md-callout-warning,
+.preview .md-callout-caution {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.preview .md-callout-warning .md-callout-title::before,
+.preview .md-callout-caution .md-callout-title::before {
+  content: "⚠";
+}
+
+.preview .md-callout-error,
+.preview .md-callout-danger {
+  border-left-color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.preview .md-callout-error .md-callout-title::before,
+.preview .md-callout-danger .md-callout-title::before {
+  content: "⛔";
+}
+
+.preview .md-callout-faq,
+.preview .md-callout-example,
+.preview .md-callout-todo {
+  border-left-color: var(--accent-2);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.preview .md-callout-faq .md-callout-title::before {
+  content: "❓";
+}
+
+.preview .md-callout-todo .md-callout-title::before {
+  content: "☐";
+}
+
+.preview .md-callout-example .md-callout-title::before {
+  content: "📌";
 }
 
 .preview blockquote {
@@ -246,5 +454,11 @@ button.secondary {
   #ast {
     min-height: 48vh;
     height: auto;
+  }
+
+  .preview table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 }
