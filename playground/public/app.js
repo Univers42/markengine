@@ -5,6 +5,9 @@ const preview = document.querySelector("#preview");
 const ast = document.querySelector("#ast");
 const sampleButton = document.querySelector("#sample-button");
 const clearButton = document.querySelector("#clear-button");
+const sourceToggleButton = document.querySelector("#source-toggle-button");
+
+let viewMode = "preview";
 
 const sample = `# MarkEngine Playground
 
@@ -35,7 +38,7 @@ async function render() {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ markdown: editor.value }),
+    body: JSON.stringify({ markdown: editor.value, viewMode }),
   });
 
   const data = await response.json();
@@ -46,6 +49,7 @@ async function render() {
   }
 
   preview.innerHTML = data.html;
+  preview.classList.toggle("source-mode", viewMode === "source");
   ast.textContent = JSON.stringify(data.ast, null, 2);
 }
 
@@ -54,7 +58,7 @@ function escapeHtml(value) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
+    .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
 
@@ -229,6 +233,12 @@ clearButton.addEventListener("click", () => {
   editor.value = "";
   scheduleRender();
   editor.focus();
+});
+sourceToggleButton.addEventListener("click", () => {
+  viewMode = viewMode === "preview" ? "source" : "preview";
+  sourceToggleButton.textContent =
+    viewMode === "source" ? "Switch to preview" : "Switch to source";
+  scheduleRender();
 });
 
 render().catch((error) => {

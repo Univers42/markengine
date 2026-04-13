@@ -3,11 +3,11 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Connect } from "vite";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, type Connect, type Plugin } from "vite";
 
 type PreviewRequestPayload = {
   markdown?: unknown;
+  viewMode?: unknown;
 };
 
 type PreviewResult = {
@@ -17,6 +17,10 @@ type PreviewResult = {
 
 type EngineModule = {
   compileMarkdownToHtml: (
+    source: string,
+    options: { documentVersion: number },
+  ) => PreviewResult;
+  compileMarkdownToSourceView: (
     source: string,
     options: { documentVersion: number },
   ) => PreviewResult;
@@ -77,7 +81,9 @@ function loadEngineModule(): EngineModule {
     typeof moduleValue !== "object" ||
     moduleValue === null ||
     typeof (moduleValue as Partial<EngineModule>).compileMarkdownToHtml !==
-      "function"
+      "function" ||
+    typeof (moduleValue as Partial<EngineModule>)
+      .compileMarkdownToSourceView !== "function"
   ) {
     throw new Error("Invalid engine module shape");
   }
@@ -91,12 +97,17 @@ async function handlePreview(
 ): Promise<void> {
   const payload = parsePayload(rawBody);
   const source = typeof payload.markdown === "string" ? payload.markdown : "";
+  const viewMode = payload.viewMode === "source" ? "source" : "preview";
   const engine = loadEngineModule();
-  const result = engine.compileMarkdownToHtml(source, { documentVersion: 1 });
+  const result =
+    viewMode === "source"
+      ? engine.compileMarkdownToSourceView(source, { documentVersion: 1 })
+      : engine.compileMarkdownToHtml(source, { documentVersion: 1 });
 
   sendJson(res, 200, {
     html: result.html,
     ast: result.ast,
+    viewMode,
   });
 }
 

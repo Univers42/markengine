@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 
 import {
   compileMarkdownToHtml,
+  compileMarkdownToSourceView,
   incrementalParse,
   parseInlines,
   parseMarkdown,
+  renderSource,
   renderHtml,
 } from "../dist/markdown.js";
 
@@ -122,4 +124,23 @@ test("parses ordered and unordered list shapes", () => {
   assert.equal(result.ast.children[0].items.length, 2);
   assert.equal(result.ast.children[1].kind, "list");
   assert.equal(result.ast.children[1].ordered, false);
+});
+
+test("renders markdown source syntax view", () => {
+  const html = renderSource(
+    "# Title\n\n- [x] done and [docs](https://example.com)",
+  );
+
+  assert.match(html, /md-source-view/);
+  assert.match(html, /md-src-marker/);
+  assert.match(html, /md-src-task/);
+  assert.match(html, /md-src-link-url/);
+});
+
+test("compiles markdown to source view with ast", () => {
+  const result = compileMarkdownToSourceView("## Section\n\nParagraph");
+
+  assert.match(result.html, /md-source-view/);
+  assert.equal(result.ast.kind, "document");
+  assert.equal(result.ast.children.length, 2);
 });
