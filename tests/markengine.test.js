@@ -9,6 +9,7 @@ import {
   parseMarkdown,
   renderSource,
   renderHtml,
+  resolveModeState,
 } from "../dist/markdown.js";
 
 test("parses a document AST with core block types", () => {
@@ -143,4 +144,35 @@ test("compiles markdown to source view with ast", () => {
   assert.match(result.html, /md-source-view/);
   assert.equal(result.ast.kind, "document");
   assert.equal(result.ast.children.length, 2);
+});
+
+test("exposes explicit mode state classes through resolver", () => {
+  assert.equal(resolveModeState("source").name, "source");
+  assert.equal(resolveModeState("live-preview").name, "live-preview");
+  assert.equal(resolveModeState("reading").name, "reading");
+});
+
+test("renders source mode with visible markdown symbols", () => {
+  const html = renderSource("# Title\n\n**Bold**", { mode: "source" });
+
+  assert.match(html, /md-src-marker/);
+  assert.doesNotMatch(html, /md-src-symbol-hidden/);
+  assert.match(html, /data-mode="source"/);
+});
+
+test("renders live preview mode with hidden markdown symbols", () => {
+  const html = renderSource("# Title\n\n**Bold**", {
+    mode: "live-preview",
+  });
+
+  assert.match(html, /md-src-marker/);
+  assert.match(html, /md-src-symbol-hidden/);
+  assert.match(html, /data-mode="live-preview"/);
+});
+
+test("tags rendered html blocks with mode state", () => {
+  const source = "# Title\n\nParagraph";
+  const result = compileMarkdownToHtml(source, {}, { mode: "reading" });
+
+  assert.match(result.html, /data-block-state="reading"/);
 });
