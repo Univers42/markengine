@@ -1,10 +1,17 @@
 import { escapeHtml } from "./utils";
-import { resolveMarkdownMode, type MarkdownViewMode } from "./render-mode";
+import {
+  resolveIndexedMarkdownMode,
+  resolveMarkdownMode,
+  type MarkdownModeResolver,
+  type MarkdownViewMode,
+} from "./render-mode";
 
 export interface SourceRenderOptions {
   showLineNumbers?: boolean;
   mode?: MarkdownViewMode;
   hideMarkdownSymbols?: boolean;
+  lineModes?: MarkdownViewMode[];
+  resolveLineMode?: MarkdownModeResolver<string>;
 }
 
 interface MarkdownSymbolDecorator {
@@ -230,16 +237,23 @@ export function renderMarkdownSource(
   options: SourceRenderOptions = {},
 ): string {
   const modeState = resolveMarkdownMode(options.mode);
-  const hideMarkdownSymbols =
-    options.hideMarkdownSymbols ?? modeState.shouldHideMarkdownSymbols();
-  const decorator = createMarkdownSymbolDecorator(hideMarkdownSymbols);
   const lines = source.replaceAll(/\r\n?/g, "\n").split("\n");
   const content = lines
     .map((line, index) => {
+      const lineState = resolveIndexedMarkdownMode(
+        options.mode,
+        index,
+        line,
+        options.lineModes,
+        options.resolveLineMode,
+      );
+      const hideMarkdownSymbols =
+        options.hideMarkdownSymbols ?? lineState.shouldHideMarkdownSymbols();
+      const decorator = createMarkdownSymbolDecorator(hideMarkdownSymbols);
       const lineNumber = options.showLineNumbers
         ? `<span class="md-src-lineno">${index + 1}</span>`
         : "";
-      return `<span class="md-src-line" data-block-state="${modeState.getBlockState()}">${lineNumber}<span class="md-src-code-line">${renderLine(line, decorator)}</span></span>`;
+      return `<span class="md-src-line" data-block-state="${lineState.getBlockState()}">${lineNumber}<span class="md-src-code-line">${renderLine(line, decorator)}</span></span>`;
     })
     .join("\n");
 

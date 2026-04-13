@@ -67,12 +67,14 @@ export { renderTerminal } from "./renderers/terminal";
 export type { TerminalRenderOptions } from "./renderers/terminal";
 
 export {
+  resolveIndexedMarkdownMode,
   resolveMarkdownMode,
   SourceMode,
   LivePreviewMode,
   ReadingMode,
 } from "./renderers/renderMode";
 export type {
+  MarkdownModeResolver,
   MarkdownModeState,
   MarkdownViewMode,
 } from "./renderers/renderMode";

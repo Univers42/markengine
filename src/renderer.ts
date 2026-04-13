@@ -6,7 +6,9 @@ import {
   ListNode,
 } from "./types";
 import {
+  resolveIndexedMarkdownMode,
   resolveMarkdownMode,
+  type MarkdownModeResolver,
   type MarkdownModeState,
   type MarkdownViewMode,
 } from "./render-mode";
@@ -14,6 +16,8 @@ import { escapeHtml } from "./utils";
 
 export interface RenderHtmlOptions {
   mode?: MarkdownViewMode;
+  blockModes?: MarkdownViewMode[];
+  resolveBlockMode?: MarkdownModeResolver<BlockNode>;
 }
 
 function renderInlines(nodes: InlineNode[]): string {
@@ -86,6 +90,21 @@ export function renderHtml(
   ast: DocumentNode,
   options: RenderHtmlOptions = {},
 ): string {
-  const state = resolveMarkdownMode(options.mode);
-  return ast.children.map((node) => renderBlock(node, state)).join("\n");
+  if (!options.blockModes && !options.resolveBlockMode) {
+    const state = resolveMarkdownMode(options.mode);
+    return ast.children.map((node) => renderBlock(node, state)).join("\n");
+  }
+
+  return ast.children
+    .map((node, index) => {
+      const state = resolveIndexedMarkdownMode(
+        options.mode,
+        index,
+        node,
+        options.blockModes,
+        options.resolveBlockMode,
+      );
+      return renderBlock(node, state);
+    })
+    .join("\n");
 }

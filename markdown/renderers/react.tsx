@@ -4,7 +4,9 @@ import type { BlockNode } from "../ast";
 import { parse } from "../parser";
 import { renderTable, renderInlines } from "./reactHelpers";
 import {
+  resolveIndexedMarkdownMode,
   resolveMarkdownMode,
+  type MarkdownModeResolver,
   type MarkdownModeState,
   type MarkdownViewMode,
 } from "./renderMode";
@@ -27,6 +29,10 @@ export interface ReactRenderOptions {
   classPrefix?: string;
   /** Rendering mode for source/live-preview/reading behavior */
   mode?: MarkdownViewMode;
+  /** Optional mode map for mixed view per top-level block */
+  blockModes?: MarkdownViewMode[];
+  /** Optional resolver for per-block mixed mode */
+  resolveBlockMode?: MarkdownModeResolver<BlockNode>;
   /** Open external links in new tab (default: true) */
   externalLinks?: boolean;
   /** Custom code block renderer (for syntax highlighting integrations) */
@@ -50,7 +56,12 @@ export interface ReactRenderOptions {
 const defaults: Required<
   Omit<
     ReactRenderOptions,
-    "codeBlockRenderer" | "mathRenderer" | "imageRenderer" | "onTaskToggle"
+    | "codeBlockRenderer"
+    | "mathRenderer"
+    | "imageRenderer"
+    | "onTaskToggle"
+    | "blockModes"
+    | "resolveBlockMode"
   >
 > = {
   classPrefix: "md",
@@ -63,8 +74,16 @@ export function renderReact(
   opts?: ReactRenderOptions,
 ): React.ReactElement[] {
   const o = { ...defaults, ...opts };
-  const modeState = resolveMarkdownMode(o.mode);
-  return blocks.map((b, i) => renderBlock(b, o, modeState, i));
+  return blocks.map((block, index) => {
+    const modeState = resolveIndexedMarkdownMode(
+      o.mode,
+      index,
+      block,
+      opts?.blockModes,
+      opts?.resolveBlockMode,
+    );
+    return renderBlock(block, o, modeState, index);
+  });
 }
 
 /**
