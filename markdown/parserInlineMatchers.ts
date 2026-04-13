@@ -186,7 +186,7 @@ export function createInlineMatchers(
       const c = text[pos];
       if (pos > 0 && text[pos - 1] === c) return null; // part of an existing run
       if (text[pos + 1] === c) return null; // double = bold, not italic
-      const close = findSingleEmphasisClose(text, pos, c as "*" | "_");
+      const close = findSingleEmphasisClose(text, pos, c as "*");
       if (close === -1 || close === pos + 1) return null;
       if (c === "_") {
         if (pos > 0 && /\w/.test(text[pos - 1])) return null;
