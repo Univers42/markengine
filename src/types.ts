@@ -114,9 +114,19 @@ export interface ParseOptions {
   documentVersion?: number;
 }
 
+export type DiagnosticSeverity = "warning" | "error";
+
+export interface ParseDiagnostic {
+  code: string;
+  message: string;
+  severity: DiagnosticSeverity;
+  span: SourceSpan;
+}
+
 export interface ParseResult {
   ast: DocumentNode;
   blockIndex: BlockRange[];
+  diagnostics: ParseDiagnostic[];
 }
 
 export interface BlockRange {
@@ -135,4 +145,5 @@ export interface IncrementalParseResult {
   text: string;
   ast: DocumentNode;
   changedNodeIds: string[];
+  diagnostics: ParseDiagnostic[];
 }
