@@ -21,7 +21,15 @@ export interface HtmlRenderOptions {
   resolveBlockMode?: MarkdownModeResolver<BlockNode>;
 }
 
-const defaults: Required<HtmlRenderOptions> = {
+type ResolvedHtmlRenderOptions = Required<
+  Pick<
+    HtmlRenderOptions,
+    "wrapperClass" | "externalLinks" | "classPrefix" | "sanitizeHtml" | "mode"
+  >
+> &
+  Pick<HtmlRenderOptions, "blockModes" | "resolveBlockMode">;
+
+const defaults: ResolvedHtmlRenderOptions = {
   wrapperClass: "",
   externalLinks: true,
   classPrefix: "md",
@@ -33,7 +41,7 @@ export function renderHtml(
   blocks: BlockNode[],
   opts?: HtmlRenderOptions,
 ): string {
-  const o = { ...defaults, ...opts };
+  const o: ResolvedHtmlRenderOptions = { ...defaults, ...opts };
   const modeState = resolveMarkdownMode(o.mode);
   const inner = blocks
     .map((block, index) => {
@@ -55,7 +63,7 @@ export function renderHtml(
 
 function renderBlock(
   node: BlockNode,
-  o: Required<HtmlRenderOptions>,
+  o: ResolvedHtmlRenderOptions,
   modeState: MarkdownModeState,
 ): string {
   const blockStateAttr = ` data-block-state="${modeState.getBlockState()}"`;
@@ -167,7 +175,7 @@ function renderBlock(
 
 function renderTaskItemContent(
   nodes: BlockNode[],
-  o: Required<HtmlRenderOptions>,
+  o: ResolvedHtmlRenderOptions,
   modeState: MarkdownModeState,
 ): string {
   // Keep the most common case compact so task text stays on the same visual line.
@@ -179,7 +187,7 @@ function renderTaskItemContent(
 
 function renderTable(
   node: Extract<BlockNode, { type: "table" }>,
-  o: Required<HtmlRenderOptions>,
+  o: ResolvedHtmlRenderOptions,
   modeState: MarkdownModeState,
 ): string {
   const blockStateAttr = ` data-block-state="${modeState.getBlockState()}"`;
@@ -211,15 +219,12 @@ function renderTable(
 
 function renderInlines(
   nodes: InlineNode[],
-  o: Required<HtmlRenderOptions>,
+  o: ResolvedHtmlRenderOptions,
 ): string {
   return nodes.map((n) => renderInline(n, o)).join("");
 }
 
-function renderInline(
-  node: InlineNode,
-  o: Required<HtmlRenderOptions>,
-): string {
+function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
   const inlineCodeStyle =
     "background:var(--color-surface-tertiary-soft2);border:1px solid var(--color-line);border-radius:6px;padding:0 0.35em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:0.92em;color:var(--color-ink-strong);";
   switch (node.type) {

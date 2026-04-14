@@ -12,9 +12,9 @@ import { incrementalParse as incrementalParseFromSource } from "./src/incrementa
 import {
   resolveIndexedMarkdownMode,
   resolveMarkdownMode,
-  ReadingMode,
-  LivePreviewMode,
-  SourceMode,
+  // ReadingMode,
+  // LivePreviewMode,
+  // SourceMode,
   type MarkdownModeResolver,
   type MarkdownModeState,
   type MarkdownViewMode,

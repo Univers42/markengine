@@ -1,5 +1,5 @@
 // Markdown shortcuts — block detection and shortcut map
-import type { BlockType } from '../../../../entities/block';
+import type { BlockType } from '@/entities/block';
 
 export interface BlockDetection {
   type: BlockType;
