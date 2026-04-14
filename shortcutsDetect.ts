@@ -1,11 +1,12 @@
 // Markdown shortcuts — block detection and shortcut map
-import type { BlockType } from '../../entities/block';
+import type { BlockType } from '../../../entities/block';
 
 export interface BlockDetection {
   type: BlockType;
   content: string;
   remainingContent: string;
   checked?: boolean;
+  kind?: string;
 }
 
 export const BLOCK_SHORTCUTS: Record<string, string> = {
@@ -126,8 +127,14 @@ export function detectBlockType(text: string): BlockDetection | null {
   if (line.startsWith('>![')) {
     const close = line.indexOf(']', 3);
     if (close !== -1) {
+      const kind = line.substring(3, close).trim() || 'note';
       const c = stripPrefix(line, close + 1);
-      return { type: 'callout', content: c, remainingContent: c };
+      return {
+        type: 'callout',
+        content: c,
+        remainingContent: c,
+        kind,
+      };
     }
   }
 
