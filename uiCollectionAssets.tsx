@@ -1,10 +1,6 @@
 import {
   DEFAULT_EMOJI_PICKER_ITEMS,
   EMOJI_PICKER_GROUPS,
-  IconBoard,
-  IconImage,
-  IconPage,
-  IconTable,
   SLASH_ITEMS as PACKAGE_SLASH_ITEMS,
   createDefaultAssetPickerTabs,
   createMediaCollectionPickerTab,
@@ -270,9 +266,4 @@ export const COLLECTION_ROLE_BADGES: Record<string, string> = {
   guest: getCollectionEmojiValue('cool'),
 };
 
-export {
-  IconBoard,
-  IconImage,
-  IconPage,
-  IconTable,
-};
+export { IconBoard, IconImage, IconPage, IconTable } from '@univers42/ui-collection';
