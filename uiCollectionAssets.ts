@@ -1,15 +1,17 @@
 import {
   DEFAULT_EMOJI_PICKER_ITEMS,
   EMOJI_PICKER_GROUPS,
+  SECTION_LABELS,
   SLASH_ITEMS as PACKAGE_SLASH_ITEMS,
   createDefaultAssetPickerTabs,
   createMediaCollectionPickerTab,
   getMediaCollection,
   type AssetPickerBoardProps,
   type AssetPickerBoardTab,
+  type MediaItem,
   type SlashMenuItem as PackageSlashMenuItem,
 } from '@univers42/ui-collection';
-import type { BlockType } from '@/entities/block';
+import type { BlockType, MediaBlockType } from '@/entities/block';
 
 const DEFAULT_PAGE_EMOJI_PRESET_IDS = [
   'rocket',
@@ -66,12 +68,26 @@ const EMOJI_GROUP_LABELS: Record<string, string> = {
 };
 
 const BOARD_ACTIVE_BACKGROUND = 'rgba(35, 131, 226, 0.12)';
+const MEDIA_PROVIDER_ALLOWLIST = new Set(['url', 'package']);
 const COLLECTION_SVG_ITEMS = getMediaCollection('svg').filter(
   (item) => !item.ref.startsWith('local:'),
 );
 const COLLECTION_COVER_ITEMS = getMediaCollection('photos').filter(
   (item) => !item.ref.startsWith('local:'),
 );
+const COLLECTION_IMAGE_ITEMS = getMediaCollection('photos').filter(isResolvableMediaItem);
+const COLLECTION_VIDEO_ITEMS = getMediaCollection('videos').filter(isResolvableMediaItem);
+const COLLECTION_AUDIO_ITEMS = getMediaCollection('other-media').filter(
+  (item) => item.kind === 'audio' && isResolvableMediaItem(item),
+);
+const COLLECTION_FILE_ITEMS = getMediaCollection('other-media').filter(
+  (item) => item.kind === 'document' && isResolvableMediaItem(item),
+);
+
+function isResolvableMediaItem(item: MediaItem): boolean {
+  const provider = item.ref.split(':', 1)[0];
+  return MEDIA_PROVIDER_ALLOWLIST.has(provider);
+}
 
 const BOARD_CLASS_NAMES: NonNullable<AssetPickerBoardProps['classNames']> = {
   root: 'w-full',
@@ -114,7 +130,7 @@ const BOARD_STYLES: NonNullable<AssetPickerBoardProps['styles']> = {
     background: 'var(--color-surface-secondary)',
     color: 'var(--color-ink)',
     padding: '0 12px',
-    fontSize: 13,
+    fontSize: 10,
   },
   groupSection: {
     gap: 8,
@@ -123,7 +139,7 @@ const BOARD_STYLES: NonNullable<AssetPickerBoardProps['styles']> = {
   groupLabel: {
     padding: '0 4px',
     color: 'var(--color-ink-muted)',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 600,
     letterSpacing: '0.04em',
     textTransform: 'uppercase',
@@ -137,7 +153,7 @@ const BOARD_STYLES: NonNullable<AssetPickerBoardProps['styles']> = {
   },
   itemLabel: {
     color: 'var(--color-ink-muted)',
-    fontSize: 11,
+    fontSize: 10,
     lineHeight: 1.25,
   },
   emptyState: {
@@ -162,6 +178,32 @@ export const PAGE_ICON_PICKER_BOARD_PROPS: Partial<AssetPickerBoardProps> = {
 export const COVER_PICKER_BOARD_PROPS: Partial<AssetPickerBoardProps> = {
   ...PAGE_ICON_PICKER_BOARD_PROPS,
   showTabs: false,
+};
+
+export const SLASH_MEDIA_PICKER_BOARD_PROPS: Partial<AssetPickerBoardProps> = {
+  ...PAGE_ICON_PICKER_BOARD_PROPS,
+  showHeader: false,
+  showSelectionPreview: false,
+  showStatusBar: false,
+  showTabs: false,
+  styles: {
+    ...PAGE_ICON_PICKER_BOARD_PROPS.styles,
+    root: {
+      ...PAGE_ICON_PICKER_BOARD_PROPS.styles?.root,
+      border: 'none',
+      borderRadius: 0,
+      background: 'transparent',
+      boxShadow: 'none',
+    },
+    searchField: {
+      ...PAGE_ICON_PICKER_BOARD_PROPS.styles?.searchField,
+      padding: '10px 12px 8px',
+    },
+    grid: {
+      ...PAGE_ICON_PICKER_BOARD_PROPS.styles?.grid,
+      padding: '4px 12px 12px',
+    },
+  },
 };
 
 export const PAGE_ICON_PICKER_TABS: AssetPickerBoardTab[] =
@@ -208,6 +250,60 @@ export const COVER_PICKER_TABS: AssetPickerBoardTab[] =
       ]
     : [];
 
+const MEDIA_PICKER_TAB_OPTIONS = {
+  activeBackground: BOARD_ACTIVE_BACKGROUND,
+  itemLabelVisibility: 'hidden',
+} as const;
+
+export const SLASH_MEDIA_PICKER_TABS: Record<MediaBlockType, AssetPickerBoardTab[]> = {
+  image: [
+    createMediaCollectionPickerTab('photos', COLLECTION_IMAGE_ITEMS, {
+      label: 'Images',
+      columns: 2,
+      layout: 'cover',
+      searchLabel: 'Search images',
+      searchPlaceholder: 'Search photos by mood or keyword',
+      ...MEDIA_PICKER_TAB_OPTIONS,
+    }),
+  ],
+  video: [
+    createMediaCollectionPickerTab('videos', COLLECTION_VIDEO_ITEMS, {
+      label: 'Videos',
+      columns: 2,
+      layout: 'media',
+      searchLabel: 'Search videos',
+      searchPlaceholder: 'Search videos by title or keyword',
+      ...MEDIA_PICKER_TAB_OPTIONS,
+    }),
+  ],
+  audio: [
+    createMediaCollectionPickerTab('other-media', COLLECTION_AUDIO_ITEMS, {
+      id: 'audio',
+      label: 'Audio',
+      columns: 1,
+      layout: 'media',
+      searchLabel: 'Search audio',
+      searchPlaceholder: 'Search tracks or audio keywords',
+      ...MEDIA_PICKER_TAB_OPTIONS,
+    }),
+  ],
+  file: [
+    createMediaCollectionPickerTab('other-media', COLLECTION_FILE_ITEMS, {
+      id: 'file',
+      label: 'Files',
+      columns: 1,
+      layout: 'media',
+      searchLabel: 'Search files',
+      searchPlaceholder: 'Search documents or files',
+      ...MEDIA_PICKER_TAB_OPTIONS,
+    }),
+  ],
+};
+
+export function getSlashMediaPickerTabs(kind: MediaBlockType): AssetPickerBoardTab[] {
+  return SLASH_MEDIA_PICKER_TABS[kind];
+}
+
 export function getCollectionEmojiValue(id: string, fallback = '✨'): string {
   return LEGACY_EMOJI_PRESETS[id] ?? EMOJI_BY_LIBRARY_ID.get(id) ?? fallback;
 }
@@ -242,6 +338,10 @@ const SUPPORTED_SLASH_TYPES = new Set<BlockType>([
   'numbered_list',
   'to_do',
   'toggle',
+  'image',
+  'video',
+  'audio',
+  'file',
   'code',
   'quote',
   'callout',
@@ -258,6 +358,8 @@ export const COLLECTION_SLASH_ITEMS = PACKAGE_SLASH_ITEMS.filter(
     type: BlockType;
   } => SUPPORTED_SLASH_TYPES.has(item.type as BlockType),
 );
+
+export const COLLECTION_SLASH_SECTION_LABELS = SECTION_LABELS;
 
 export const COLLECTION_ROLE_BADGES: Record<string, string> = {
   admin: getCollectionEmojiValue('star'),
