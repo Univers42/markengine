@@ -12,9 +12,56 @@ export function parseInlineMarkdown(text: string): string {
   return renderInlineNodesToHtml(nodes);
 }
 
+function unwrapCodeRichStyles(nodes: InlineNode[]) {
+  let currentNodes = nodes;
+  let textColor: string | null = null;
+  let backgroundColor: string | null = null;
+
+  while (currentNodes.length === 1) {
+    const [node] = currentNodes;
+    if (node.type === "text_color") {
+      textColor = node.color;
+      currentNodes = node.children;
+      continue;
+    }
+    if (node.type === "background_color") {
+      backgroundColor = node.color;
+      currentNodes = node.children;
+      continue;
+    }
+    break;
+  }
+
+  return { nodes: currentNodes, textColor, backgroundColor };
+}
+
+function shouldSuppressInlineBackground(nodes: InlineNode[]): boolean {
+  if (nodes.length !== 1) {
+    return false;
+  }
+
+  const [node] = nodes;
+  switch (node.type) {
+    case "code":
+    case "code_rich":
+      return true;
+    case "bold":
+    case "italic":
+    case "bold_italic":
+    case "strikethrough":
+    case "underline":
+    case "highlight":
+    case "text_color":
+    case "background_color":
+      return shouldSuppressInlineBackground(node.children);
+    default:
+      return false;
+  }
+}
+
 function renderInlineNodesToHtml(nodes: InlineNode[]): string {
   const inlineCodeStyle =
-    "background:var(--color-surface-tertiary-soft2);border:1px solid var(--color-line);border-radius:6px;padding:0 0.35em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:0.92em;color:var(--color-ink-strong);";
+    "background-color:var(--inline-code-background,var(--color-surface-tertiary-soft2));border:1px solid var(--color-line);border-radius:6px;padding:0 0.35em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:0.92em;color:var(--inline-code-color,currentColor);text-decoration-color:var(--inline-code-decoration-color,currentColor);--inline-background-fill:transparent;--inline-background-padding:0;--inline-background-radius:0;";
   return nodes
     .map((node) => {
       switch (node.type) {
@@ -27,11 +74,32 @@ function renderInlineNodesToHtml(nodes: InlineNode[]): string {
         case "bold_italic":
           return `<strong><em style="font-style:italic">${renderInlineNodesToHtml(node.children)}</em></strong>`;
         case "strikethrough":
-          return `<del>${renderInlineNodesToHtml(node.children)}</del>`;
+          return `<del style="text-decoration-color:currentColor">${renderInlineNodesToHtml(node.children)}</del>`;
         case "underline":
           return `<u>${renderInlineNodesToHtml(node.children)}</u>`;
+        case "text_color":
+          return `<span data-inline-type="text_color" data-inline-color="${escHtml(node.color)}" style="color:${escHtml(node.color)};text-decoration-color:${escHtml(node.color)};--inline-code-color:${escHtml(node.color)};--inline-code-decoration-color:${escHtml(node.color)}">${renderInlineNodesToHtml(node.children)}</span>`;
+        case "background_color":
+          return `<span data-inline-type="background_color" data-inline-color="${escHtml(node.color)}" style="background-color:var(--inline-background-fill,${escHtml(node.color)}33);border-radius:var(--inline-background-radius,4px);padding:var(--inline-background-padding,0 0.2em);--inline-code-background:${escHtml(node.color)}33;${shouldSuppressInlineBackground(node.children) ? "--inline-background-fill:transparent;--inline-background-padding:0;--inline-background-radius:0;" : ""}">${renderInlineNodesToHtml(node.children)}</span>`;
+        case "code_rich": {
+          const {
+            nodes: codeChildren,
+            textColor,
+            backgroundColor,
+          } = unwrapCodeRichStyles(node.children);
+          const style = [
+            inlineCodeStyle,
+            textColor
+              ? `--inline-code-color:${escHtml(textColor)};--inline-code-decoration-color:${escHtml(textColor)};`
+              : "",
+            backgroundColor
+              ? `--inline-code-background:${escHtml(backgroundColor)}33;`
+              : "",
+          ].join("");
+          return `<code class="inline-code" data-inline-type="code" style="${style}">${renderInlineNodesToHtml(codeChildren)}</code>`;
+        }
         case "code":
-          return `<code class="inline-code" style="${inlineCodeStyle}">${escHtml(node.value)}</code>`;
+          return `<code class="inline-code" data-inline-type="code" style="${inlineCodeStyle}">${escHtml(node.value)}</code>`;
         case "link":
           return `<a href="${escHtml(node.href)}">${renderInlineNodesToHtml(node.children)}</a>`;
         case "image":
@@ -167,6 +235,9 @@ function inlineToPlain(nodes: InlineNode[]): string {
         case "bold_italic":
         case "strikethrough":
         case "underline":
+        case "text_color":
+        case "background_color":
+        case "code_rich":
         case "highlight":
           return inlineToPlain(n.children);
         case "code":
@@ -206,6 +277,12 @@ function inlineToMarkdown(nodes: InlineNode[]): string {
           return `~~${inlineToMarkdown(n.children)}~~`;
         case "underline":
           return `__${inlineToMarkdown(n.children)}__`;
+        case "text_color":
+          return `[color=${n.color}]${inlineToMarkdown(n.children)}[/color]`;
+        case "background_color":
+          return `[bg=${n.color}]${inlineToMarkdown(n.children)}[/bg]`;
+        case "code_rich":
+          return `[code]${inlineToMarkdown(n.children)}[/code]`;
         case "highlight":
           return `==${inlineToMarkdown(n.children)}==`;
         case "code":

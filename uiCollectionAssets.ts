@@ -6,6 +6,8 @@ import {
   createDefaultAssetPickerTabs,
   createMediaCollectionPickerTab,
   getMediaCollection,
+  resolveAssetValue,
+  resolveMediaUrl,
   type AssetPickerBoardProps,
   type AssetPickerBoardTab,
   type MediaItem,
@@ -302,6 +304,39 @@ export const SLASH_MEDIA_PICKER_TABS: Record<MediaBlockType, AssetPickerBoardTab
 
 export function getSlashMediaPickerTabs(kind: MediaBlockType): AssetPickerBoardTab[] {
   return SLASH_MEDIA_PICKER_TABS[kind];
+}
+
+export interface ResolvedCollectionMediaAsset {
+  label?: string;
+  url?: string;
+  thumbnailUrl?: string;
+}
+
+export function resolveCollectionMediaAsset(
+  value: string | undefined,
+  tabs: AssetPickerBoardTab[],
+  fallbackLabel?: string,
+): ResolvedCollectionMediaAsset | null {
+  if (!value) {
+    return null;
+  }
+
+  const resolved = resolveAssetValue(value, tabs);
+  if (!resolved) {
+    return null;
+  }
+
+  const mediaItem = resolved.mediaItem;
+  const previewImageUrl =
+    resolved.preview?.kind === 'image' ? resolved.preview.src : undefined;
+
+  return {
+    label: resolved.item?.label ?? mediaItem?.label ?? fallbackLabel,
+    url: mediaItem ? resolveMediaUrl(mediaItem.ref) : previewImageUrl,
+    thumbnailUrl: mediaItem?.thumbnailRef
+      ? resolveMediaUrl(mediaItem.thumbnailRef)
+      : previewImageUrl,
+  };
 }
 
 export function getCollectionEmojiValue(id: string, fallback = '✨'): string {

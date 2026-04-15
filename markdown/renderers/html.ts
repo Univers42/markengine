@@ -224,9 +224,56 @@ function renderInlines(
   return nodes.map((n) => renderInline(n, o)).join("");
 }
 
+function unwrapCodeRichStyles(nodes: InlineNode[]) {
+  let currentNodes = nodes;
+  let textColor: string | null = null;
+  let backgroundColor: string | null = null;
+
+  while (currentNodes.length === 1) {
+    const [node] = currentNodes;
+    if (node.type === "text_color") {
+      textColor = node.color;
+      currentNodes = node.children;
+      continue;
+    }
+    if (node.type === "background_color") {
+      backgroundColor = node.color;
+      currentNodes = node.children;
+      continue;
+    }
+    break;
+  }
+
+  return { nodes: currentNodes, textColor, backgroundColor };
+}
+
+function shouldSuppressInlineBackground(nodes: InlineNode[]): boolean {
+  if (nodes.length !== 1) {
+    return false;
+  }
+
+  const [node] = nodes;
+  switch (node.type) {
+    case "code":
+    case "code_rich":
+      return true;
+    case "bold":
+    case "italic":
+    case "bold_italic":
+    case "strikethrough":
+    case "underline":
+    case "highlight":
+    case "text_color":
+    case "background_color":
+      return shouldSuppressInlineBackground(node.children);
+    default:
+      return false;
+  }
+}
+
 function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
   const inlineCodeStyle =
-    "background:var(--color-surface-tertiary-soft2);border:1px solid var(--color-line);border-radius:6px;padding:0 0.35em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:0.92em;color:var(--color-ink-strong);";
+    "background-color:var(--inline-code-background,var(--color-surface-tertiary-soft2));border:1px solid var(--color-line);border-radius:6px;padding:0 0.35em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:0.92em;color:var(--inline-code-color,currentColor);text-decoration-color:var(--inline-code-decoration-color,currentColor);--inline-background-fill:transparent;--inline-background-padding:0;--inline-background-radius:0;";
   switch (node.type) {
     case "text":
       return esc(node.value);
@@ -237,11 +284,32 @@ function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
     case "bold_italic":
       return `<strong><em style="font-style:italic">${renderInlines(node.children, o)}</em></strong>`;
     case "strikethrough":
-      return `<del>${renderInlines(node.children, o)}</del>`;
+      return `<del style="text-decoration-color:currentColor">${renderInlines(node.children, o)}</del>`;
     case "underline":
       return `<u>${renderInlines(node.children, o)}</u>`;
+    case "text_color":
+      return `<span data-inline-type="text_color" data-inline-color="${esc(node.color)}" style="color:${esc(node.color)};text-decoration-color:${esc(node.color)};--inline-code-color:${esc(node.color)};--inline-code-decoration-color:${esc(node.color)}">${renderInlines(node.children, o)}</span>`;
+    case "background_color":
+      return `<span data-inline-type="background_color" data-inline-color="${esc(node.color)}" style="background-color:var(--inline-background-fill,${esc(node.color)}33);border-radius:var(--inline-background-radius,4px);padding:var(--inline-background-padding,0 0.2em);--inline-code-background:${esc(node.color)}33;${shouldSuppressInlineBackground(node.children) ? "--inline-background-fill:transparent;--inline-background-padding:0;--inline-background-radius:0;" : ""}">${renderInlines(node.children, o)}</span>`;
+    case "code_rich": {
+      const {
+        nodes: codeChildren,
+        textColor,
+        backgroundColor,
+      } = unwrapCodeRichStyles(node.children);
+      const style = [
+        inlineCodeStyle,
+        textColor
+          ? `--inline-code-color:${esc(textColor)};--inline-code-decoration-color:${esc(textColor)};`
+          : "",
+        backgroundColor
+          ? `--inline-code-background:${esc(backgroundColor)}33;`
+          : "",
+      ].join("");
+      return `<code class="inline-code" data-inline-type="code" style="${style}">${renderInlines(codeChildren, o)}</code>`;
+    }
     case "code":
-      return `<code class="inline-code" style="${inlineCodeStyle}">${esc(node.value)}</code>`;
+      return `<code class="inline-code" data-inline-type="code" style="${inlineCodeStyle}">${esc(node.value)}</code>`;
     case "link": {
       const attrs = [
         `href="${esc(node.href)}"`,

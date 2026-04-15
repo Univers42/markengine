@@ -28,6 +28,109 @@ function matchDelimited(
   };
 }
 
+function matchTaggedInlineColor(
+  text: string,
+  pos: number,
+  tag: "color" | "bg",
+  parseInline: InlineParser,
+  factory: (color: string, children: InlineNode[]) => InlineNode,
+): InlineMatchResult | null {
+  const openMatch = new RegExp(`^\\[${tag}=([^\\]]+)\\]`).exec(text.slice(pos));
+  if (!openMatch) return null;
+
+  const openLength = openMatch[0].length;
+  const start = pos + openLength;
+  const closeTag = `[/${tag}]`;
+  const end = findMatchingTaggedClose(text, start, tag, true);
+  if (end === -1 || end === start) return null;
+
+  const color = openMatch[1].trim();
+  const inner = text.slice(start, end);
+  return {
+    start: pos,
+    end: end + closeTag.length,
+    node: factory(color, parseInline(inner)),
+  };
+}
+
+function matchTaggedInlineChildren(
+  text: string,
+  pos: number,
+  tag: string,
+  parseInline: InlineParser,
+  factory: (children: InlineNode[]) => InlineNode,
+): InlineMatchResult | null {
+  const openTag = `[${tag}]`;
+  if (!text.startsWith(openTag, pos)) return null;
+
+  const start = pos + openTag.length;
+  const closeTag = `[/${tag}]`;
+  const end = findMatchingTaggedClose(text, start, tag, false);
+  if (end === -1 || end === start) return null;
+
+  const inner = text.slice(start, end);
+  return {
+    start: pos,
+    end: end + closeTag.length,
+    node: factory(parseInline(inner)),
+  };
+}
+
+function findMatchingTaggedClose(
+  text: string,
+  start: number,
+  tag: string,
+  hasAttribute: boolean,
+): number {
+  const closeTag = `[/${tag}]`;
+  const plainOpenTag = `[${tag}]`;
+  const attributedOpenPrefix = `[${tag}=`;
+  let depth = 1;
+  let cursor = start;
+
+  while (cursor < text.length) {
+    const closeIndex = text.indexOf(closeTag, cursor);
+    if (closeIndex === -1) {
+      return -1;
+    }
+
+    let openIndex = -1;
+    let nextCursor = closeIndex + closeTag.length;
+
+    if (hasAttribute) {
+      const candidate = text.indexOf(attributedOpenPrefix, cursor);
+      if (candidate !== -1 && candidate < closeIndex) {
+        const bracketEnd = text.indexOf("]", candidate + attributedOpenPrefix.length);
+        if (bracketEnd !== -1) {
+          openIndex = candidate;
+          nextCursor = bracketEnd + 1;
+        }
+      }
+    } else {
+      const candidate = text.indexOf(plainOpenTag, cursor);
+      if (candidate !== -1 && candidate < closeIndex) {
+        openIndex = candidate;
+        nextCursor = candidate + plainOpenTag.length;
+      }
+    }
+
+    if (openIndex !== -1 && openIndex < closeIndex) {
+      depth += 1;
+      cursor = nextCursor;
+      continue;
+    }
+
+    depth -= 1;
+    if (depth === 0) {
+      return closeIndex;
+    }
+
+    cursor = closeIndex + closeTag.length;
+  }
+
+  return -1;
+}
+
 function findSingleEmphasisClose(
   text: string,
   pos: number,
@@ -110,6 +213,48 @@ export function createInlineMatchers(
         node: { type: "image", src, alt, title },
       };
     },
+    (text, pos) =>
+      matchTaggedInlineColor(text, pos, "color", parseInline, (color, children) => ({
+        type: "text_color",
+        color,
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineColor(text, pos, "bg", parseInline, (color, children) => ({
+        type: "background_color",
+        color,
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineChildren(text, pos, "code", parseInline, (children) => ({
+        type: "code_rich",
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineChildren(text, pos, "b", parseInline, (children) => ({
+        type: "bold",
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineChildren(text, pos, "i", parseInline, (children) => ({
+        type: "italic",
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineChildren(text, pos, "s", parseInline, (children) => ({
+        type: "strikethrough",
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineChildren(text, pos, "u", parseInline, (children) => ({
+        type: "underline",
+        children,
+      })),
+    (text, pos) =>
+      matchTaggedInlineChildren(text, pos, "mark", parseInline, (children) => ({
+        type: "highlight",
+        children,
+      })),
     (text, pos) => {
       if (text[pos] !== "[") return null;
       const labelClose = findClosingBracket(text, pos);

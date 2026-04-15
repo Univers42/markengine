@@ -72,21 +72,73 @@ export function renderInlines(
   return nodes.map((n, i) => renderInlineNode(n, o, i));
 }
 
+function unwrapCodeRichStyles(nodes: InlineNode[]) {
+  let currentNodes = nodes;
+  let textColor: string | null = null;
+  let backgroundColor: string | null = null;
+
+  while (currentNodes.length === 1) {
+    const [node] = currentNodes;
+    if (node.type === "text_color") {
+      textColor = node.color;
+      currentNodes = node.children;
+      continue;
+    }
+    if (node.type === "background_color") {
+      backgroundColor = node.color;
+      currentNodes = node.children;
+      continue;
+    }
+    break;
+  }
+
+  return { nodes: currentNodes, textColor, backgroundColor };
+}
+
+function shouldSuppressInlineBackground(nodes: InlineNode[]): boolean {
+  if (nodes.length !== 1) {
+    return false;
+  }
+
+  const [node] = nodes;
+  switch (node.type) {
+    case "code":
+    case "code_rich":
+      return true;
+    case "bold":
+    case "italic":
+    case "bold_italic":
+    case "strikethrough":
+    case "underline":
+    case "highlight":
+    case "text_color":
+    case "background_color":
+      return shouldSuppressInlineBackground(node.children);
+    default:
+      return false;
+  }
+}
+
 export function renderInlineNode(
   node: InlineNode,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   o: any,
   key: number | string,
 ): React.ReactNode {
-  const inlineCodeStyle: React.CSSProperties = {
-    background: "var(--color-surface-tertiary-soft2)",
+  const inlineCodeStyle = {
+    backgroundColor:
+      "var(--inline-code-background, var(--color-surface-tertiary-soft2))",
     border: "1px solid var(--color-line)",
     borderRadius: "6px",
     padding: "0 0.35em",
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     fontSize: "0.92em",
-    color: "var(--color-ink-strong)",
-  };
+    color: "var(--inline-code-color, currentColor)",
+    textDecorationColor: "var(--inline-code-decoration-color, currentColor)",
+    ["--inline-background-fill" as "--inline-background-fill"]: "transparent",
+    ["--inline-background-padding" as "--inline-background-padding"]: "0",
+    ["--inline-background-radius" as "--inline-background-radius"]: "0",
+  } as React.CSSProperties;
 
   switch (node.type) {
     case "text":
@@ -120,7 +172,7 @@ export function renderInlineNode(
     case "strikethrough":
       return React.createElement(
         "del",
-        { key },
+        { key, style: { textDecorationColor: "currentColor" } },
         ...renderInlines(node.children, o),
       );
 
@@ -131,10 +183,98 @@ export function renderInlineNode(
         ...renderInlines(node.children, o),
       );
 
+    case "text_color":
+      return React.createElement(
+        "span",
+        {
+          key,
+          "data-inline-type": "text_color",
+          "data-inline-color": node.color,
+          style: {
+            color: node.color,
+            textDecorationColor: node.color,
+            ["--inline-code-color" as "--inline-code-color"]: node.color,
+            ["--inline-code-decoration-color" as "--inline-code-decoration-color"]:
+              node.color,
+          },
+        },
+        ...renderInlines(node.children, o),
+      );
+
+    case "background_color":
+      {
+        const suppressBackground = shouldSuppressInlineBackground(node.children);
+      return React.createElement(
+        "span",
+        {
+          key,
+          "data-inline-type": "background_color",
+          "data-inline-color": node.color,
+          style: {
+            backgroundColor: `var(--inline-background-fill, ${node.color}33)`,
+            borderRadius: "var(--inline-background-radius, 4px)",
+            padding: "var(--inline-background-padding, 0 0.2em)",
+            ["--inline-code-background" as "--inline-code-background"]:
+              `${node.color}33`,
+            ...(suppressBackground
+              ? {
+                  ["--inline-background-fill" as "--inline-background-fill"]:
+                    "transparent",
+                  ["--inline-background-padding" as "--inline-background-padding"]:
+                    "0",
+                  ["--inline-background-radius" as "--inline-background-radius"]:
+                    "0",
+                }
+              : {}),
+          },
+        },
+        ...renderInlines(node.children, o),
+      );
+      }
+
+    case "code_rich":
+      {
+        const {
+          nodes: codeChildren,
+          textColor,
+          backgroundColor,
+        } = unwrapCodeRichStyles(node.children);
+        return React.createElement(
+          "code",
+          {
+            key,
+            className: "inline-code",
+            "data-inline-type": "code",
+            style: {
+              ...inlineCodeStyle,
+              ...(textColor
+                ? {
+                    ["--inline-code-color" as "--inline-code-color"]: textColor,
+                    ["--inline-code-decoration-color" as "--inline-code-decoration-color"]:
+                      textColor,
+                  }
+                : {}),
+              ...(backgroundColor
+                ? {
+                    ["--inline-code-background" as "--inline-code-background"]:
+                      `${backgroundColor}33`,
+                  }
+                : {}),
+            },
+          },
+          ...renderInlines(codeChildren, o),
+        );
+      }
+
     case "code":
       return React.createElement(
         "code",
-        { key, className: "inline-code", style: inlineCodeStyle },
+        {
+          key,
+          className: "inline-code",
+          "data-inline-type": "code",
+          style: inlineCodeStyle,
+        },
         node.value,
       );
 

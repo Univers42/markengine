@@ -34,6 +34,11 @@ export function renderInline(node: InlineNode, ctx: RenderCtx): string {
       return `${c(ctx, STRIKETHROUGH)}${renderInlines(node.children, ctx)}${reset(ctx)}`;
     case 'underline':
       return `${c(ctx, UNDERLINE)}${renderInlines(node.children, ctx)}${reset(ctx)}`;
+    case 'text_color':
+    case 'background_color':
+      return renderInlines(node.children, ctx);
+    case 'code_rich':
+      return `${c(ctx, C.code + C.codeBg)} ${renderInlines(node.children, ctx)} ${reset(ctx)}`;
     case 'code':
       return `${c(ctx, C.code + C.codeBg)} ${node.value} ${reset(ctx)}`;
     case 'link':
@@ -61,7 +66,7 @@ export function renderInlinesPlain(nodes: InlineNode[]): string {
     switch (n.type) {
       case 'text': return n.value;
       case 'bold': case 'italic': case 'bold_italic': case 'strikethrough':
-      case 'underline': case 'highlight':
+      case 'underline': case 'highlight': case 'text_color': case 'background_color': case 'code_rich':
         return renderInlinesPlain(n.children);
       case 'code': return n.value;
       case 'link': return renderInlinesPlain(n.children);
