@@ -1,6 +1,10 @@
 // React renderer — table, inline, and helper functions
 import React from "react";
 import type { BlockNode, InlineNode } from "../ast";
+import {
+  shouldSuppressInlineBackground,
+  unwrapCodeRichStyles,
+} from "./inlineStyleHelpers";
 
 export function renderTable(
   node: Extract<BlockNode, { type: "table" }>,
@@ -72,53 +76,6 @@ export function renderInlines(
   return nodes.map((n, i) => renderInlineNode(n, o, i));
 }
 
-function unwrapCodeRichStyles(nodes: InlineNode[]) {
-  let currentNodes = nodes;
-  let textColor: string | null = null;
-  let backgroundColor: string | null = null;
-
-  while (currentNodes.length === 1) {
-    const [node] = currentNodes;
-    if (node.type === "text_color") {
-      textColor = node.color;
-      currentNodes = node.children;
-      continue;
-    }
-    if (node.type === "background_color") {
-      backgroundColor = node.color;
-      currentNodes = node.children;
-      continue;
-    }
-    break;
-  }
-
-  return { nodes: currentNodes, textColor, backgroundColor };
-}
-
-function shouldSuppressInlineBackground(nodes: InlineNode[]): boolean {
-  if (nodes.length !== 1) {
-    return false;
-  }
-
-  const [node] = nodes;
-  switch (node.type) {
-    case "code":
-    case "code_rich":
-      return true;
-    case "bold":
-    case "italic":
-    case "bold_italic":
-    case "strikethrough":
-    case "underline":
-    case "highlight":
-    case "text_color":
-    case "background_color":
-      return shouldSuppressInlineBackground(node.children);
-    default:
-      return false;
-  }
-}
-
 export function renderInlineNode(
   node: InlineNode,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,9 +92,9 @@ export function renderInlineNode(
     fontSize: "0.92em",
     color: "var(--inline-code-color, currentColor)",
     textDecorationColor: "var(--inline-code-decoration-color, currentColor)",
-    ["--inline-background-fill" as "--inline-background-fill"]: "transparent",
-    ["--inline-background-padding" as "--inline-background-padding"]: "0",
-    ["--inline-background-radius" as "--inline-background-radius"]: "0",
+    ["--inline-background-fill" as const]: "transparent",
+    ["--inline-background-padding" as const]: "0",
+    ["--inline-background-radius" as const]: "0",
   } as React.CSSProperties;
 
   switch (node.type) {
@@ -193,8 +150,8 @@ export function renderInlineNode(
           style: {
             color: node.color,
             textDecorationColor: node.color,
-            ["--inline-code-color" as "--inline-code-color"]: node.color,
-            ["--inline-code-decoration-color" as "--inline-code-decoration-color"]:
+            ["--inline-code-color" as const]: node.color,
+            ["--inline-code-decoration-color" as const]:
               node.color,
           },
         },
@@ -214,15 +171,15 @@ export function renderInlineNode(
             backgroundColor: `var(--inline-background-fill, ${node.color}33)`,
             borderRadius: "var(--inline-background-radius, 4px)",
             padding: "var(--inline-background-padding, 0 0.2em)",
-            ["--inline-code-background" as "--inline-code-background"]:
+            ["--inline-code-background" as const]:
               `${node.color}33`,
             ...(suppressBackground
               ? {
-                  ["--inline-background-fill" as "--inline-background-fill"]:
+                  ["--inline-background-fill" as const]:
                     "transparent",
-                  ["--inline-background-padding" as "--inline-background-padding"]:
+                  ["--inline-background-padding" as const]:
                     "0",
-                  ["--inline-background-radius" as "--inline-background-radius"]:
+                  ["--inline-background-radius" as const]:
                     "0",
                 }
               : {}),
@@ -249,14 +206,14 @@ export function renderInlineNode(
               ...inlineCodeStyle,
               ...(textColor
                 ? {
-                    ["--inline-code-color" as "--inline-code-color"]: textColor,
-                    ["--inline-code-decoration-color" as "--inline-code-decoration-color"]:
+                    ["--inline-code-color" as const]: textColor,
+                    ["--inline-code-decoration-color" as const]:
                       textColor,
                   }
                 : {}),
               ...(backgroundColor
                 ? {
-                    ["--inline-code-background" as "--inline-code-background"]:
+                    ["--inline-code-background" as const]:
                       `${backgroundColor}33`,
                   }
                 : {}),

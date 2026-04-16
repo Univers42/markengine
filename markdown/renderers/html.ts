@@ -4,6 +4,11 @@
 
 import type { BlockNode, InlineNode } from "../ast";
 import {
+  INLINE_CODE_STYLE,
+  shouldSuppressInlineBackground,
+  unwrapCodeRichStyles,
+} from "./inlineStyleHelpers";
+import {
   resolveIndexedMarkdownMode,
   resolveMarkdownMode,
   type MarkdownModeResolver,
@@ -224,56 +229,7 @@ function renderInlines(
   return nodes.map((n) => renderInline(n, o)).join("");
 }
 
-function unwrapCodeRichStyles(nodes: InlineNode[]) {
-  let currentNodes = nodes;
-  let textColor: string | null = null;
-  let backgroundColor: string | null = null;
-
-  while (currentNodes.length === 1) {
-    const [node] = currentNodes;
-    if (node.type === "text_color") {
-      textColor = node.color;
-      currentNodes = node.children;
-      continue;
-    }
-    if (node.type === "background_color") {
-      backgroundColor = node.color;
-      currentNodes = node.children;
-      continue;
-    }
-    break;
-  }
-
-  return { nodes: currentNodes, textColor, backgroundColor };
-}
-
-function shouldSuppressInlineBackground(nodes: InlineNode[]): boolean {
-  if (nodes.length !== 1) {
-    return false;
-  }
-
-  const [node] = nodes;
-  switch (node.type) {
-    case "code":
-    case "code_rich":
-      return true;
-    case "bold":
-    case "italic":
-    case "bold_italic":
-    case "strikethrough":
-    case "underline":
-    case "highlight":
-    case "text_color":
-    case "background_color":
-      return shouldSuppressInlineBackground(node.children);
-    default:
-      return false;
-  }
-}
-
 function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
-  const inlineCodeStyle =
-    "background-color:var(--inline-code-background,var(--color-surface-tertiary-soft2));border:1px solid var(--color-line);border-radius:6px;padding:0 0.35em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:0.92em;color:var(--inline-code-color,currentColor);text-decoration-color:var(--inline-code-decoration-color,currentColor);--inline-background-fill:transparent;--inline-background-padding:0;--inline-background-radius:0;";
   switch (node.type) {
     case "text":
       return esc(node.value);
@@ -298,7 +254,7 @@ function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
         backgroundColor,
       } = unwrapCodeRichStyles(node.children);
       const style = [
-        inlineCodeStyle,
+        INLINE_CODE_STYLE,
         textColor
           ? `--inline-code-color:${esc(textColor)};--inline-code-decoration-color:${esc(textColor)};`
           : "",
@@ -309,7 +265,7 @@ function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
       return `<code class="inline-code" data-inline-type="code" style="${style}">${renderInlines(codeChildren, o)}</code>`;
     }
     case "code":
-      return `<code class="inline-code" data-inline-type="code" style="${inlineCodeStyle}">${esc(node.value)}</code>`;
+      return `<code class="inline-code" data-inline-type="code" style="${INLINE_CODE_STYLE}">${esc(node.value)}</code>`;
     case "link": {
       const attrs = [
         `href="${esc(node.href)}"`,

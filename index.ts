@@ -1,3 +1,23 @@
 export { parseInlineMarkdown } from './shortcuts';
 export { detectBlockType, parseMarkdownToBlocks } from './shortcuts';
+export {
+  applyInlineFormatting,
+  type InlineColorKind,
+  type InlineFormatKind,
+  type InlineFormattingCommand,
+  type InlineTextSelection,
+} from './inlineFormatting';
+export {
+  readInlineEditorDomState,
+  type InlineEditorDomState,
+} from './inlineEditorDom';
+export {
+  areInlineEditorSelectionSnapshotsEqual,
+  getInlineEditorSelectionOffsets,
+  getInlineEditorSelectionSnapshot,
+  setInlineEditorSelectionOffsets,
+  type InlineEditorSelectionOffsets,
+  type InlineEditorSelectionSnapshot,
+} from './inlineEditorSelection';
+export { normalizeInlineLinkHref } from './inlineLinks';
 export { getCalloutIcon as getCalloutIconForKind } from './markdown/renderers/terminalHelpers';

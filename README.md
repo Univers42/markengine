@@ -11,7 +11,7 @@ A compact Markdown engine built around a canonical `src/` implementation.
 
 ## Public API
 
-The main entry point is [markdown.ts](markdown.ts).
+The current entry point for the rich inline/editor helpers is [index.ts](index.ts).
 
 Typical usage:
 
@@ -36,6 +36,17 @@ const next = incrementalParse("# Title\n\nA *fast* engine.", parsed, {
   text: "A *very fast* engine.",
 });
 ```
+
+### Inline editor helpers
+
+For `contentEditable` integrations, `markengine` also exposes:
+
+- `parseInlineMarkdown(source)` to render canonical inline HTML
+- `applyInlineFormatting(source, selection, command)` to mutate inline content on the AST
+- `readInlineEditorDomState(root)` to convert editor DOM back into canonical source
+- `getInlineEditorSelectionSnapshot(root)` / `getInlineEditorSelectionOffsets(root)` to read selection state
+- `setInlineEditorSelectionOffsets(root, offsets)` to restore the browser selection
+- `normalizeInlineLinkHref(href)` to normalize user-entered inline link targets
 
 ## Architecture notes
 
