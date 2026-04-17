@@ -292,6 +292,17 @@ button.secondary {
 
 .preview a {
   color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.14em;
+}
+
+.preview a:hover {
+  color: color-mix(in srgb, var(--accent) 84%, white);
+}
+
+.preview a:visited {
+  color: color-mix(in srgb, var(--accent) 82%, var(--accent-2));
 }
 
 .preview code {
