@@ -1,7 +1,6 @@
 import {
   DEFAULT_EMOJI_PICKER_ITEMS,
   EMOJI_PICKER_GROUPS,
-  SECTION_LABELS,
   SLASH_ITEMS as PACKAGE_SLASH_ITEMS,
   createDefaultAssetPickerTabs,
   createMediaCollectionPickerTab,
@@ -13,6 +12,7 @@ import {
   type MediaItem,
   type SlashMenuItem as PackageSlashMenuItem,
 } from '@univers42/ui-collection';
+export { SECTION_LABELS as COLLECTION_SLASH_SECTION_LABELS } from '@univers42/ui-collection';
 import type { BlockType, MediaBlockType } from '@/entities/block';
 
 const DEFAULT_PAGE_EMOJI_PRESET_IDS = [
@@ -391,10 +391,22 @@ export const COLLECTION_SLASH_ITEMS = PACKAGE_SLASH_ITEMS.filter(
     item,
   ): item is PackageSlashMenuItem & {
     type: BlockType;
-  } => SUPPORTED_SLASH_TYPES.has(item.type as BlockType),
-);
+  } => {
+    if (!SUPPORTED_SLASH_TYPES.has(item.type as BlockType)) {
+      return false;
+    }
 
-export const COLLECTION_SLASH_SECTION_LABELS = SECTION_LABELS;
+    if (item.type !== 'callout') {
+      return true;
+    }
+
+    const firstCallout = PACKAGE_SLASH_ITEMS.find(
+      (candidate) => candidate.type === 'callout',
+    );
+
+    return firstCallout === item;
+  },
+);
 
 export const COLLECTION_ROLE_BADGES: Record<string, string> = {
   admin: getCollectionEmojiValue('star'),
