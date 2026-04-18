@@ -13,7 +13,9 @@
 import { parseInline } from "./markdown/index";
 import type { InlineNode } from "./markdown/index";
 import {
+  areInlineNodeListsEqual,
   cloneWrapperNode,
+  getInlineNodesTextLength,
   hasInlineChildren,
   normalizeInlineNodes,
   serializeInlineNodes,
@@ -53,6 +55,16 @@ interface InlineSelectionPartition {
   after: InlineNode[];
 }
 
+interface InlineSelectionSegments {
+  leading: InlineNode[];
+  core: InlineNode[];
+  trailing: InlineNode[];
+}
+
+/**
+ * Applies a formatting command to a non-collapsed inline text selection and
+ * returns the next canonical inline source string.
+ */
 export function applyInlineFormatting(
   source: string,
   selection: InlineTextSelection,
@@ -139,13 +151,31 @@ function applyColor(
     return selection;
   }
 
-  if (getUniformColor(selection, colorKind) === normalizedColor) {
-    return normalizeInlineNodes(removeColorFromNodes(selection, colorKind));
+  const segments =
+    colorKind === "background"
+      ? trimInlineSelectionWhitespace(selection)
+      : {
+          leading: [],
+          core: selection,
+          trailing: [],
+        };
+  if (segments.core.length === 0) {
+    return selection;
   }
 
-  const cleanedSelection = removeColorFromNodes(selection, colorKind);
+  if (getUniformColor(segments.core, colorKind) === normalizedColor) {
+    return normalizeInlineNodes([
+      ...segments.leading,
+      ...removeColorFromNodes(segments.core, colorKind),
+      ...segments.trailing,
+    ]);
+  }
+
+  const cleanedSelection = removeColorFromNodes(segments.core, colorKind);
   return normalizeInlineNodes([
+    ...segments.leading,
     createColorWrapper(colorKind, normalizedColor, cleanedSelection),
+    ...segments.trailing,
   ]);
 }
 
@@ -390,6 +420,57 @@ function isWrapperMatchingFormat(node: InlineNode, format: InlineFormatKind) {
   }
 }
 
-function areInlineNodeListsEqual(left: InlineNode[], right: InlineNode[]) {
-  return JSON.stringify(left) === JSON.stringify(right);
+function trimInlineSelectionWhitespace(
+  nodes: InlineNode[],
+): InlineSelectionSegments {
+  const textContent = getInlineNodesTextContent(nodes);
+  const leadingWhitespaceLength = textContent.match(/^\s+/)?.[0].length ?? 0;
+  const trailingWhitespaceLength = textContent.match(/\s+$/)?.[0].length ?? 0;
+
+  if (leadingWhitespaceLength === 0 && trailingWhitespaceLength === 0) {
+    return {
+      leading: [],
+      core: nodes,
+      trailing: [],
+    };
+  }
+
+  const [leading, afterLeading] = splitNodesAtOffset(nodes, leadingWhitespaceLength);
+  const coreLength = Math.max(
+    0,
+    getInlineNodesTextLength(afterLeading) - trailingWhitespaceLength,
+  );
+  const [core, trailing] = splitNodesAtOffset(afterLeading, coreLength);
+
+  return {
+    leading,
+    core,
+    trailing,
+  };
+}
+
+function getInlineNodesTextContent(nodes: InlineNode[]) {
+  return nodes.map(getInlineNodeTextContent).join("");
+}
+
+function getInlineNodeTextContent(node: InlineNode): string {
+  switch (node.type) {
+    case "text":
+      return node.value;
+    case "code":
+      return node.value;
+    case "emoji":
+    case "math_inline":
+      return node.value;
+    case "footnote_ref":
+      return `[^${node.label}]`;
+    case "line_break":
+      return "\n";
+    case "image":
+      return "";
+    default:
+      return hasInlineChildren(node)
+        ? getInlineNodesTextContent(node.children)
+        : "";
+  }
 }

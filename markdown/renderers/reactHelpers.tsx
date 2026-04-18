@@ -2,6 +2,9 @@
 import React from "react";
 import type { BlockNode, InlineNode } from "../ast";
 import {
+  getInlineBackgroundStyle,
+  getInlineCodeStyle,
+  getInlineTextColorStyle,
   shouldSuppressInlineBackground,
   unwrapCodeRichStyles,
 } from "./inlineStyleHelpers";
@@ -82,21 +85,6 @@ export function renderInlineNode(
   o: any,
   key: number | string,
 ): React.ReactNode {
-  const inlineCodeStyle = {
-    backgroundColor:
-      "var(--inline-code-background, var(--color-surface-tertiary-soft2))",
-    border: "1px solid var(--color-line)",
-    borderRadius: "6px",
-    padding: "0 0.35em",
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-    fontSize: "0.92em",
-    color: "var(--inline-code-color, currentColor)",
-    textDecorationColor: "var(--inline-code-decoration-color, currentColor)",
-    ["--inline-background-fill" as const]: "transparent",
-    ["--inline-background-padding" as const]: "0",
-    ["--inline-background-radius" as const]: "0",
-  } as React.CSSProperties;
-
   switch (node.type) {
     case "text":
       return node.value;
@@ -147,13 +135,7 @@ export function renderInlineNode(
           key,
           "data-inline-type": "text_color",
           "data-inline-color": node.color,
-          style: {
-            color: node.color,
-            textDecorationColor: node.color,
-            ["--inline-code-color" as const]: node.color,
-            ["--inline-code-decoration-color" as const]:
-              node.color,
-          },
+          style: getInlineTextColorStyle(node.color) as React.CSSProperties,
         },
         ...renderInlines(node.children, o),
       );
@@ -167,23 +149,10 @@ export function renderInlineNode(
           key,
           "data-inline-type": "background_color",
           "data-inline-color": node.color,
-          style: {
-            backgroundColor: `var(--inline-background-fill, ${node.color}33)`,
-            borderRadius: "var(--inline-background-radius, 4px)",
-            padding: "var(--inline-background-padding, 0 0.2em)",
-            ["--inline-code-background" as const]:
-              `${node.color}33`,
-            ...(suppressBackground
-              ? {
-                  ["--inline-background-fill" as const]:
-                    "transparent",
-                  ["--inline-background-padding" as const]:
-                    "0",
-                  ["--inline-background-radius" as const]:
-                    "0",
-                }
-              : {}),
-          },
+          style: getInlineBackgroundStyle(
+            node.color,
+            suppressBackground,
+          ) as React.CSSProperties,
         },
         ...renderInlines(node.children, o),
       );
@@ -202,22 +171,10 @@ export function renderInlineNode(
             key,
             className: "inline-code",
             "data-inline-type": "code",
-            style: {
-              ...inlineCodeStyle,
-              ...(textColor
-                ? {
-                    ["--inline-code-color" as const]: textColor,
-                    ["--inline-code-decoration-color" as const]:
-                      textColor,
-                  }
-                : {}),
-              ...(backgroundColor
-                ? {
-                    ["--inline-code-background" as const]:
-                      `${backgroundColor}33`,
-                  }
-                : {}),
-            },
+            style: getInlineCodeStyle(
+              textColor,
+              backgroundColor,
+            ) as React.CSSProperties,
           },
           ...renderInlines(codeChildren, o),
         );
@@ -230,7 +187,7 @@ export function renderInlineNode(
           key,
           className: "inline-code",
           "data-inline-type": "code",
-          style: inlineCodeStyle,
+          style: getInlineCodeStyle() as React.CSSProperties,
         },
         node.value,
       );

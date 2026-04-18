@@ -4,7 +4,9 @@
 
 import type { BlockNode, InlineNode } from "../ast";
 import {
-  INLINE_CODE_STYLE,
+  getInlineBackgroundCss,
+  getInlineCodeCss,
+  getInlineTextColorCss,
   shouldSuppressInlineBackground,
   unwrapCodeRichStyles,
 } from "./inlineStyleHelpers";
@@ -244,28 +246,20 @@ function renderInline(node: InlineNode, o: ResolvedHtmlRenderOptions): string {
     case "underline":
       return `<u>${renderInlines(node.children, o)}</u>`;
     case "text_color":
-      return `<span data-inline-type="text_color" data-inline-color="${esc(node.color)}" style="color:${esc(node.color)};text-decoration-color:${esc(node.color)};--inline-code-color:${esc(node.color)};--inline-code-decoration-color:${esc(node.color)}">${renderInlines(node.children, o)}</span>`;
+      return `<span data-inline-type="text_color" data-inline-color="${esc(node.color)}" style="${getInlineTextColorCss(node.color)}">${renderInlines(node.children, o)}</span>`;
     case "background_color":
-      return `<span data-inline-type="background_color" data-inline-color="${esc(node.color)}" style="background-color:var(--inline-background-fill,${esc(node.color)}33);border-radius:var(--inline-background-radius,4px);padding:var(--inline-background-padding,0 0.2em);--inline-code-background:${esc(node.color)}33;${shouldSuppressInlineBackground(node.children) ? "--inline-background-fill:transparent;--inline-background-padding:0;--inline-background-radius:0;" : ""}">${renderInlines(node.children, o)}</span>`;
+      return `<span data-inline-type="background_color" data-inline-color="${esc(node.color)}" style="${getInlineBackgroundCss(node.color, shouldSuppressInlineBackground(node.children))}">${renderInlines(node.children, o)}</span>`;
     case "code_rich": {
       const {
         nodes: codeChildren,
         textColor,
         backgroundColor,
       } = unwrapCodeRichStyles(node.children);
-      const style = [
-        INLINE_CODE_STYLE,
-        textColor
-          ? `--inline-code-color:${esc(textColor)};--inline-code-decoration-color:${esc(textColor)};`
-          : "",
-        backgroundColor
-          ? `--inline-code-background:${esc(backgroundColor)}33;`
-          : "",
-      ].join("");
+      const style = getInlineCodeCss(textColor, backgroundColor);
       return `<code class="inline-code" data-inline-type="code" style="${style}">${renderInlines(codeChildren, o)}</code>`;
     }
     case "code":
-      return `<code class="inline-code" data-inline-type="code" style="${INLINE_CODE_STYLE}">${esc(node.value)}</code>`;
+      return `<code class="inline-code" data-inline-type="code" style="${getInlineCodeCss()}">${esc(node.value)}</code>`;
     case "link": {
       const attrs = [
         `href="${esc(node.href)}"`,

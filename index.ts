@@ -8,6 +8,11 @@ export {
   type InlineTextSelection,
 } from './inlineFormatting';
 export {
+  applyInlineTextEdit,
+  type InlineTextEditCommand,
+  type InlineTextEditResult,
+} from './inlineTextEditing';
+export {
   readInlineEditorDomState,
   type InlineEditorDomState,
 } from './inlineEditorDom';

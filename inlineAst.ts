@@ -107,6 +107,25 @@ export function serializeInlineNodes(nodes: InlineNode[]): string {
   return nodes.map(serializeInlineNode).join("");
 }
 
+/**
+ * Performs a structural equality check for two inline node lists without
+ * serializing them first. This keeps formatting hot paths independent from
+ * `JSON.stringify` allocations.
+ */
+export function areInlineNodeListsEqual(left: InlineNode[], right: InlineNode[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (!areInlineNodesEqual(left[index], right[index])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function hasInlineChildren(node: InlineNode): node is WrapperNode {
   switch (node.type) {
     case "bold":
@@ -138,6 +157,63 @@ export function cloneWrapperNode(
       return { type: "link", href: node.href, title: node.title, children };
     default:
       return { ...node, children };
+  }
+}
+
+/**
+ * Performs a structural equality check for a single inline node.
+ */
+export function areInlineNodesEqual(left: InlineNode, right: InlineNode): boolean {
+  if (left.type !== right.type) {
+    return false;
+  }
+
+  switch (left.type) {
+    case "text":
+    case "code":
+    case "math_inline": {
+      const next = right as typeof left;
+      return left.value === next.value;
+    }
+    case "emoji": {
+      const next = right as typeof left;
+      return left.value === next.value && left.raw === next.raw;
+    }
+    case "footnote_ref": {
+      const next = right as typeof left;
+      return left.label === next.label;
+    }
+    case "line_break":
+      return true;
+    case "image": {
+      const next = right as typeof left;
+      return (
+        left.src === next.src &&
+        left.alt === next.alt &&
+        left.title === next.title
+      );
+    }
+    case "link": {
+      const next = right as typeof left;
+      return (
+        left.href === next.href &&
+        left.title === next.title &&
+        areInlineNodeListsEqual(left.children, next.children)
+      );
+    }
+    case "text_color":
+    case "background_color": {
+      const next = right as typeof left;
+      return (
+        left.color === next.color &&
+        areInlineNodeListsEqual(left.children, next.children)
+      );
+    }
+    default:
+      return hasInlineChildren(left) &&
+        hasInlineChildren(right)
+        ? areInlineNodeListsEqual(left.children, right.children)
+        : false;
   }
 }
 

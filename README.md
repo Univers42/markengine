@@ -48,6 +48,28 @@ For `contentEditable` integrations, `markengine` also exposes:
 - `setInlineEditorSelectionOffsets(root, offsets)` to restore the browser selection
 - `normalizeInlineLinkHref(href)` to normalize user-entered inline link targets
 
+### Inline formatting architecture
+
+The inline editor pipeline is intentionally split into small modules:
+
+- [inlineFormatting.ts](inlineFormatting.ts) applies selection-based format commands on the inline AST.
+- [inlineAst.ts](inlineAst.ts) owns AST splitting, normalization, serialization, and structural equality helpers.
+- [inlineEditorDom.ts](inlineEditorDom.ts) converts `contentEditable` DOM back into canonical inline source.
+- [inlineEditorDomFormatting.ts](inlineEditorDomFormatting.ts) isolates DOM formatting detection and canonical-element checks.
+- [inlineTextStyles.ts](inlineTextStyles.ts) centralizes inline color normalization and UI-facing color presets.
+- [markdown/renderers/inlineStyleHelpers.ts](markdown/renderers/inlineStyleHelpers.ts) shares inline style semantics across HTML, inline HTML, and React renderers.
+
+This split keeps the editor responsibilities separate:
+
+- DOM reading is independent from AST mutation.
+- AST mutation is independent from rendering.
+- Shared inline styling semantics live in one place instead of being repeated across renderers.
+
+### Performance notes
+
+- `inlineFormatting.ts` compares AST selections structurally instead of serializing them with `JSON.stringify`, avoiding extra allocations on repeated formatting operations.
+- Shared inline style helpers reduce duplicated per-render style construction logic across renderer implementations.
+
 ## Architecture notes
 
 - [src/block-parser.ts](src/block-parser.ts) handles block structure.
