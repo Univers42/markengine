@@ -25,4 +25,5 @@ export {
   type InlineEditorSelectionSnapshot,
 } from './inlineEditorSelection';
 export { normalizeInlineLinkHref } from './inlineLinks';
+export { normalizeInlineSource } from './inlineSource';
 export { getCalloutIcon as getCalloutIconForKind } from './markdown/renderers/terminalHelpers';
