@@ -31,6 +31,8 @@ export interface InlineEditorDomState {
   nodes: InlineNode[];
   source: string;
   requiresNormalization: boolean;
+  hasElementNodes: boolean;
+  requiresElementNormalization: boolean;
 }
 
 /**
@@ -42,16 +44,23 @@ export function readInlineEditorDomState(
   root: HTMLElement,
 ): InlineEditorDomState {
   const result = readDomChildNodes(Array.from(root.childNodes));
+  const rawSource = serializeInlineNodes(result.nodes);
   const nodes = normalizeInlineNodes(result.nodes);
   const source = serializeInlineNodes(nodes);
+  const requiresStructuralNormalization = rawSource !== source;
+  const requiresElementNormalization =
+    result.hasElementNodes &&
+    (result.requiresNormalization || requiresStructuralNormalization);
 
   return {
     nodes,
     source,
     requiresNormalization:
-      result.requiresNormalization ||
+      requiresElementNormalization ||
       (!result.hasElementNodes &&
         INLINE_SOURCE_NORMALIZATION_PATTERN.test(source)),
+    hasElementNodes: result.hasElementNodes,
+    requiresElementNormalization,
   };
 }
 

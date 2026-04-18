@@ -2,6 +2,10 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const vm = require("node:vm");
 const esbuild = require("esbuild");
+const Node = {
+  TEXT_NODE: 3,
+  ELEMENT_NODE: 1,
+};
 
 function loadModule(entryPoint) {
   const bundle = esbuild.buildSync({
@@ -18,6 +22,7 @@ function loadModule(entryPoint) {
     module,
     exports: module.exports,
     require,
+    Node,
     console,
     process,
     Buffer,
@@ -37,9 +42,47 @@ const { applyInlineTextEdit } = loadModule(
 const { parseInlineMarkdown } = loadModule(
   "src/shared/lib/markengine/shortcuts.ts",
 );
+const { readInlineEditorDomState } = loadModule(
+  "src/shared/lib/markengine/inlineEditorDom.ts",
+);
 
 function createSelection(start, end) {
   return { start, end };
+}
+
+function createTextNode(value) {
+  return {
+    nodeType: Node.TEXT_NODE,
+    textContent: value,
+  };
+}
+
+function createStyle(properties = {}) {
+  return {
+    fontWeight: "",
+    fontStyle: "",
+    textDecoration: "",
+    color: "",
+    backgroundColor: "",
+    ...properties,
+    getPropertyValue(name) {
+      return this[name] ?? "";
+    },
+  };
+}
+
+function createElement(tagName, options = {}) {
+  const attributes = options.attributes ?? {};
+  return {
+    nodeType: Node.ELEMENT_NODE,
+    tagName,
+    childNodes: options.childNodes ?? [],
+    dataset: options.dataset ?? {},
+    style: createStyle(options.style),
+    getAttribute(name) {
+      return attributes[name] ?? null;
+    },
+  };
 }
 
 test("supports mixed inline formats across a single line", () => {
@@ -143,6 +186,19 @@ test("background color HTML does not use inline padding that shifts wrapping", (
   assert.equal(html.includes("0 0.2em"), false);
 });
 
+test("inline code inherits background and text color through other wrappers", () => {
+  const html = parseInlineMarkdown(
+    "[code][b][bg=#FACC15][color=#2563EB]delta[/color][/bg][/b][/code]",
+  );
+
+  assert.match(html, /data-inline-type="code"/);
+  assert.match(html, /--inline-code-background:#FACC1533/);
+  assert.match(html, /--inline-code-color:#2563EB/);
+  assert.equal(html.includes('data-inline-type="background_color"'), false);
+  assert.equal(html.includes('data-inline-type="text_color"'), false);
+  assert.match(html, /<strong>delta<\/strong>/);
+});
+
 test("typing inside colored text preserves the active color wrapper", () => {
   const result = applyInlineTextEdit(
     "[color=#2563EB]delta[/color] zeta",
@@ -185,4 +241,54 @@ test("backspace removes text without discarding the surrounding formatting", () 
   assert.equal(result.source, "[b][color=#2563EB]delt[/color][/b]");
   assert.equal(result.selection.start, 4);
   assert.equal(result.selection.end, 4);
+});
+
+test("DOM reads require normalization when browser nests identical color wrappers", () => {
+  const root = createElement("DIV", {
+    childNodes: [
+      createElement("SPAN", {
+        dataset: {
+          inlineType: "text_color",
+          inlineColor: "#2563EB",
+        },
+        attributes: {
+          "data-inline-type": "text_color",
+          "data-inline-color": "#2563EB",
+        },
+        style: {
+          color: "#2563EB",
+          textDecorationColor: "#2563EB",
+          "--inline-code-color": "#2563EB",
+          "--inline-code-decoration-color": "#2563EB",
+        },
+        childNodes: [
+          createTextNode("ab"),
+          createElement("SPAN", {
+            dataset: {
+              inlineType: "text_color",
+              inlineColor: "#2563EB",
+            },
+            attributes: {
+              "data-inline-type": "text_color",
+              "data-inline-color": "#2563EB",
+            },
+            style: {
+              color: "#2563EB",
+              textDecorationColor: "#2563EB",
+              "--inline-code-color": "#2563EB",
+              "--inline-code-decoration-color": "#2563EB",
+            },
+            childNodes: [createTextNode("X")],
+          }),
+          createTextNode("cd"),
+        ],
+      }),
+    ],
+  });
+
+  const state = readInlineEditorDomState(root);
+
+  assert.equal(state.source, "[color=#2563EB]abXcd[/color]");
+  assert.equal(state.requiresElementNormalization, true);
+  assert.equal(state.requiresNormalization, true);
 });

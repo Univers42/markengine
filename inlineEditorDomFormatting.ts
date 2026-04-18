@@ -222,7 +222,11 @@ function getLinkTitle(element: HTMLElement) {
 
 function getTextColor(element: HTMLElement) {
   return (
-    normalizeDomColorToken(element.dataset.inlineColor) ??
+    normalizeDomColorToken(
+      element.dataset.inlineType === "text_color"
+        ? element.dataset.inlineColor
+        : null,
+    ) ??
     normalizeDomColorToken(element.style.color) ??
     normalizeDomColorToken(element.getAttribute("color"))
   );
@@ -230,7 +234,11 @@ function getTextColor(element: HTMLElement) {
 
 function getBackgroundColor(element: HTMLElement) {
   return (
-    normalizeDomColorToken(element.dataset.inlineColor) ??
+    normalizeDomColorToken(
+      element.dataset.inlineType === "background_color"
+        ? element.dataset.inlineColor
+        : null,
+    ) ??
     normalizeDomColorToken(element.style.backgroundColor)
   );
 }

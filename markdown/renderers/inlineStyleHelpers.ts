@@ -98,26 +98,61 @@ export function getInlineCodeCss(
 }
 
 export function unwrapCodeRichStyles(nodes: InlineNode[]) {
-  let currentNodes = nodes;
-  let textColor: string | null = null;
-  let backgroundColor: string | null = null;
+  return unwrapCodeRichStylesFromNodes(nodes);
+}
 
-  while (currentNodes.length === 1) {
-    const [node] = currentNodes;
-    if (node.type === "text_color") {
-      textColor = node.color;
-      currentNodes = node.children;
-      continue;
-    }
-    if (node.type === "background_color") {
-      backgroundColor = node.color;
-      currentNodes = node.children;
-      continue;
-    }
-    break;
+function unwrapCodeRichStylesFromNodes(nodes: InlineNode[]): {
+  nodes: InlineNode[];
+  textColor: string | null;
+  backgroundColor: string | null;
+} {
+  if (nodes.length !== 1) {
+    return {
+      nodes,
+      textColor: null,
+      backgroundColor: null,
+    };
   }
 
-  return { nodes: currentNodes, textColor, backgroundColor };
+  const [node] = nodes;
+  switch (node.type) {
+    case "text_color": {
+      const unwrapped = unwrapCodeRichStylesFromNodes(node.children);
+      return {
+        nodes: unwrapped.nodes,
+        textColor: node.color,
+        backgroundColor: unwrapped.backgroundColor,
+      };
+    }
+    case "background_color": {
+      const unwrapped = unwrapCodeRichStylesFromNodes(node.children);
+      return {
+        nodes: unwrapped.nodes,
+        textColor: unwrapped.textColor,
+        backgroundColor: node.color,
+      };
+    }
+    case "bold":
+    case "italic":
+    case "bold_italic":
+    case "strikethrough":
+    case "underline":
+    case "highlight":
+    case "link": {
+      const unwrapped = unwrapCodeRichStylesFromNodes(node.children);
+      return {
+        nodes: [{ ...node, children: unwrapped.nodes }],
+        textColor: unwrapped.textColor,
+        backgroundColor: unwrapped.backgroundColor,
+      };
+    }
+    default:
+      return {
+        nodes,
+        textColor: null,
+        backgroundColor: null,
+      };
+  }
 }
 
 export function shouldSuppressInlineBackground(nodes: InlineNode[]): boolean {
