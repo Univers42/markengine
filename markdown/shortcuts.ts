@@ -1,17 +1,17 @@
 // Markdown shortcuts — inline parsing and block conversion
 import type { BlockType, Block } from '@/entities/block';
 import type { InlineNode } from './ast';
-import { renderInlineNodesToHtml } from './renderers/inlineHtml';
+import { renderInlineNodesToHtml, type InlineHtmlOptions } from './renderers/inlineHtml';
 import { renderInlines, type ReactRenderOptions } from './renderers/react';
 import { parse, parseInline } from './parser';
 
 export type { BlockDetection } from './shortcutsDetect';
 export { BLOCK_SHORTCUTS, detectBlockType } from './shortcutsDetect';
 
-export function parseInlineMarkdown(text: string): string {
+export function parseInlineMarkdown(text: string, options: InlineHtmlOptions = {}): string {
   // Use the full parser's inline engine → convert to HTML
   const nodes = parseInline(text);
-  return renderInlineNodesToHtml(nodes);
+  return renderInlineNodesToHtml(nodes, options);
 }
 
 /**

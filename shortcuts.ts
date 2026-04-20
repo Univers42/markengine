@@ -7,12 +7,13 @@ import {
 } from "./markdown/shortcuts";
 import { parse } from "./markdown/parser";
 import type { ReactRenderOptions } from "./markdown/renderers/react";
+import type { InlineHtmlOptions } from "./markdown/renderers/inlineHtml";
 
 export type { BlockDetection } from "./shortcutsDetect";
 export { BLOCK_SHORTCUTS, detectBlockType } from "./shortcutsDetect";
 
-export function parseInlineMarkdown(text: string): string {
-  return renderInlineMarkdown(text);
+export function parseInlineMarkdown(text: string, options: InlineHtmlOptions = {}): string {
+  return renderInlineMarkdown(text, options);
 }
 
 /**
