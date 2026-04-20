@@ -1,4 +1,7 @@
-export { parseInlineMarkdown } from './shortcuts';
+export {
+  parseInlineMarkdown,
+  renderInlineToReact,
+} from './shortcuts';
 export { detectBlockType, parseMarkdownToBlocks } from './shortcuts';
 export {
   applyInlineFormatting,

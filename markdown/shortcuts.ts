@@ -2,6 +2,7 @@
 import type { BlockType, Block } from '@/entities/block';
 import type { InlineNode } from './ast';
 import { renderInlineNodesToHtml } from './renderers/inlineHtml';
+import { renderInlines, type ReactRenderOptions } from './renderers/react';
 import { parse, parseInline } from './parser';
 
 export type { BlockDetection } from './shortcutsDetect';
@@ -11,6 +12,14 @@ export function parseInlineMarkdown(text: string): string {
   // Use the full parser's inline engine → convert to HTML
   const nodes = parseInline(text);
   return renderInlineNodesToHtml(nodes);
+}
+
+/**
+ * Render a markdown string to React elements.
+ */
+export function renderInlineToReact(text: string, o: ReactRenderOptions = {}): React.ReactNode {
+  const nodes = parseInline(text);
+  return renderInlines(nodes, o);
 }
 
 /**

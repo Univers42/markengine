@@ -210,6 +210,13 @@ export function renderInlineNode(
     }
 
     case "internal_link":
+      if (o.internalLinkRenderer) {
+        return React.createElement(
+          React.Fragment,
+          { key },
+          o.internalLinkRenderer(node.pageId),
+        );
+      }
       return React.createElement(
         "span",
         {
