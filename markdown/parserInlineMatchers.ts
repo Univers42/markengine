@@ -257,7 +257,7 @@ export function createInlineMatchers(
       })),
     (text, pos) => {
       if (text[pos] !== "[" || text[pos + 1] !== "[") return null;
-      const match = /^\[\[page:([a-zA-Z0-9_-]+)\]\]/.exec(text.slice(pos));
+      const match = /^\[\[page:([^\]]+)\]\]/.exec(text.slice(pos));
       if (!match) return null;
       return {
         start: pos,

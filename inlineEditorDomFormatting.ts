@@ -10,6 +10,7 @@ export interface ElementFormattingState {
   backgroundColor: string | null;
   linkHref: string | null;
   linkTitle: string | null;
+  internalPageId: string | null;
   code: boolean;
   codeTextColor: string | null;
   codeBackgroundColor: string | null;
@@ -24,6 +25,7 @@ type FormattingKind =
   | "textColor"
   | "backgroundColor"
   | "link"
+  | "internal_link"
   | "code";
 
 /**
@@ -53,6 +55,7 @@ export function getElementFormattingState(
     backgroundColor: getBackgroundColor(element),
     linkHref: getLinkHref(element),
     linkTitle: getLinkTitle(element),
+    internalPageId: getInternalPageId(element),
     code,
     codeTextColor: code ? getCodeTextColor(element) : null,
     codeBackgroundColor: code ? getCodeBackgroundColor(element) : null,
@@ -86,6 +89,13 @@ export function isCanonicalInlineElement(
         hasOnlyFormatting(formatting, ["code"])
       );
     case "SPAN":
+      if (formatting.internalPageId) {
+        return (
+          element.classList.contains("page-mention-placeholder") &&
+          hasOnlyFormatting(formatting, ["internal_link"])
+        );
+      }
+
       if (element.dataset.inlineType === "text_color" && formatting.textColor) {
         return hasOnlyFormatting(formatting, ["textColor"]);
       }
@@ -145,6 +155,10 @@ function getActiveFormattingKinds(formatting: ElementFormattingState) {
 
   if (formatting.linkHref) {
     activeKinds.push("link");
+  }
+
+  if (formatting.internalPageId) {
+    activeKinds.push("internal_link");
   }
 
   if (formatting.code) {
@@ -218,6 +232,10 @@ function getLinkTitle(element: HTMLElement) {
 
   const title = element.getAttribute("title");
   return title?.trim() ? title : null;
+}
+
+function getInternalPageId(element: HTMLElement) {
+  return element.dataset.pageId || null;
 }
 
 function getTextColor(element: HTMLElement) {

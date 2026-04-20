@@ -127,6 +127,18 @@ function readElementNode(element: HTMLElement): DomReadResult {
     return readImageElement(element);
   }
 
+  const formatting = getElementFormattingState(element);
+
+  // If this is an internal link (page mention), treat it as an atomic node
+  // and ignore its internal HTML structure (icon, title text).
+  if (formatting.internalPageId) {
+    return {
+      nodes: [{ type: "internal_link", pageId: formatting.internalPageId }],
+      requiresNormalization: !isCanonicalInlineElement(element, formatting),
+      hasElementNodes: true,
+    };
+  }
+
   const childResult = readDomChildNodes(Array.from(element.childNodes));
   if (isBlockContainerElement(element)) {
     return {
@@ -136,7 +148,6 @@ function readElementNode(element: HTMLElement): DomReadResult {
     };
   }
 
-  const formatting = getElementFormattingState(element);
   const nodes = applyElementFormatting(childResult.nodes, formatting);
 
   return {
