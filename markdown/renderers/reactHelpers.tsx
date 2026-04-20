@@ -209,6 +209,25 @@ export function renderInlineNode(
       );
     }
 
+    case "internal_link":
+      return React.createElement(
+        "span",
+        {
+          key,
+          className: "page-mention-placeholder",
+          style: {
+            color: "#0077ff",
+            textDecoration: "underline",
+            fontWeight: 500,
+            cursor: "pointer",
+            display: "inline-flex",
+            padding: "0 4px",
+            borderRadius: "4px",
+          },
+        },
+        node.pageId,
+      );
+
     case "image": {
       if (o.imageRenderer) {
         return o.imageRenderer(node.src, node.alt, node.title);
