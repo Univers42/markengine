@@ -216,11 +216,16 @@ export function renderInlineNode(
           key,
           className: "page-mention-placeholder",
           style: {
-            color: "var(--color-primary)",
+            color: "#0077ff",
             textDecoration: "underline",
+            fontWeight: 500,
+            cursor: "pointer",
+            display: "inline-flex",
+            padding: "0 4px",
+            borderRadius: "4px",
           },
         },
-        `[[ ${node.pageId} ]]`,
+        node.pageId,
       );
 
     case "image": {
