@@ -40,6 +40,8 @@ export function renderInlineNodesToHtml(nodes: InlineNode[]): string {
           return `<code class="inline-code" data-inline-type="code" style="${getInlineCodeCss()}">${esc(node.value)}</code>`;
         case "link":
           return `<a href="${esc(node.href)}">${renderInlineNodesToHtml(node.children)}</a>`;
+        case "internal_link":
+          return `<span class="page-mention-placeholder" style="color:var(--color-primary);text-decoration:underline">[[ ${esc(node.pageId)} ]]</span>`;
         case "image":
           return `<img src="${esc(node.src)}" alt="${esc(node.alt)}" />`;
         case "highlight":

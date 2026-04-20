@@ -256,6 +256,16 @@ export function createInlineMatchers(
         children,
       })),
     (text, pos) => {
+      if (text[pos] !== "[" || text[pos + 1] !== "[") return null;
+      const match = /^\[\[page:([a-zA-Z0-9_-]+)\]\]/.exec(text.slice(pos));
+      if (!match) return null;
+      return {
+        start: pos,
+        end: pos + match[0].length,
+        node: { type: "internal_link", pageId: match[1] },
+      };
+    },
+    (text, pos) => {
       if (text[pos] !== "[") return null;
       const labelClose = findClosingBracket(text, pos);
       if (labelClose === -1 || text[labelClose + 1] !== "(") return null;

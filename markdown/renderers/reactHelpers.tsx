@@ -209,6 +209,20 @@ export function renderInlineNode(
       );
     }
 
+    case "internal_link":
+      return React.createElement(
+        "span",
+        {
+          key,
+          className: "page-mention-placeholder",
+          style: {
+            color: "var(--color-primary)",
+            textDecoration: "underline",
+          },
+        },
+        `[[ ${node.pageId} ]]`,
+      );
+
     case "image": {
       if (o.imageRenderer) {
         return o.imageRenderer(node.src, node.alt, node.title);

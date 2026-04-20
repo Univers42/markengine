@@ -183,6 +183,10 @@ export function areInlineNodesEqual(left: InlineNode, right: InlineNode): boolea
       const next = right as typeof left;
       return left.label === next.label;
     }
+    case "internal_link": {
+      const next = right as typeof left;
+      return left.pageId === next.pageId;
+    }
     case "line_break":
       return true;
     case "image": {
@@ -248,7 +252,8 @@ function splitNodeAtOffset(
     node.type === "emoji" ||
     node.type === "math_inline" ||
     node.type === "footnote_ref" ||
-    node.type === "line_break"
+    node.type === "line_break" ||
+    node.type === "internal_link"
   ) {
     return offset > 0 ? [[node], []] : [[], [node]];
   }
@@ -276,6 +281,8 @@ function getInlineNodeTextLength(node: InlineNode): number {
       return node.value.length;
     case "footnote_ref":
       return node.label.length + 2;
+    case "internal_link":
+      return node.pageId.length + 9; // "[[page:ID]]"
     case "line_break":
       return 1;
     case "image":
@@ -303,7 +310,8 @@ function normalizeInlineNode(node: InlineNode): InlineNode[] {
   if (
     node.type === "footnote_ref" ||
     node.type === "line_break" ||
-    node.type === "image"
+    node.type === "image" ||
+    node.type === "internal_link"
   ) {
     return [node];
   }
@@ -361,6 +369,8 @@ function serializeInlineNode(node: InlineNode): string {
       const title = node.title ? ` "${node.title}"` : "";
       return `![${node.alt}](${node.src}${title})`;
     }
+    case "internal_link":
+      return `[[page:${node.pageId}]]`;
     case "line_break":
       return "\n";
     case "highlight":
