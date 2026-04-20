@@ -3,6 +3,7 @@ import React from "react";
 import type { BlockNode } from "../ast";
 import { parse } from "../parser";
 import { renderTable, renderInlines } from "./reactHelpers";
+export { renderInlines };
 import {
   resolveIndexedMarkdownMode,
   resolveMarkdownMode,

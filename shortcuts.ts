@@ -1,14 +1,25 @@
 // Markdown shortcuts — inline parsing and block conversion
 import type { BlockType, Block } from "@/entities/block";
 import type { InlineNode } from "./markdown/ast";
-import { parseInlineMarkdown as renderInlineMarkdown } from "./markdown/shortcuts";
+import { 
+  parseInlineMarkdown as renderInlineMarkdown,
+  renderInlineToReact as renderInlineToReactBase,
+} from "./markdown/shortcuts";
 import { parse } from "./markdown/parser";
+import type { ReactRenderOptions } from "./markdown/renderers/react";
 
 export type { BlockDetection } from "./shortcutsDetect";
 export { BLOCK_SHORTCUTS, detectBlockType } from "./shortcutsDetect";
 
 export function parseInlineMarkdown(text: string): string {
   return renderInlineMarkdown(text);
+}
+
+/**
+ * Render a markdown string to React elements.
+ */
+export function renderInlineToReact(text: string, o: ReactRenderOptions = {}): React.ReactNode {
+  return renderInlineToReactBase(text, o);
 }
 
 /**
