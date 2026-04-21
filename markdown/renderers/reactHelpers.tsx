@@ -198,6 +198,7 @@ export function renderInlineNode(
         key,
         href: node.href,
         title: node.title || undefined,
+        style: { cursor: "pointer" },
         ...(o.externalLinks && isExt
           ? { target: "_blank", rel: "noopener noreferrer" }
           : {}),

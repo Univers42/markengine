@@ -43,7 +43,12 @@ export function renderInlineNodesToHtml(nodes: InlineNode[], options: InlineHtml
         case "code":
           return `<code class="inline-code" data-inline-type="code" style="${getInlineCodeCss()}">${esc(node.value)}</code>`;
         case "link":
-          return `<a href="${esc(node.href)}">${renderInlineNodesToHtml(node.children, options)}</a>`;
+          return `<a 
+            href="${esc(node.href)}" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style="color:var(--color-accent);cursor:pointer;text-decoration:underline;text-underline-offset:0.14em"
+          >${renderInlineNodesToHtml(node.children, options)}</a>`;
         case "internal_link": {
           const resolved = options.resolveInternalLinkTitle?.(node.pageId);
           const title = resolved?.title || node.pageId;
