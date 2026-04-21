@@ -48,7 +48,7 @@ export function renderInlineNodesToHtml(nodes: InlineNode[], options: InlineHtml
             target="_blank" 
             rel="noopener noreferrer"
             style="color:var(--color-accent);cursor:pointer;text-decoration:underline;text-underline-offset:0.14em"
-          >${renderInlineNodesToHtml(node.children, options)}</a>`;
+          >${renderInlineNodesToHtml(node.children, options)}</a>\u200B`;
         case "internal_link": {
           const resolved = options.resolveInternalLinkTitle?.(node.pageId);
           const title = resolved?.title || node.pageId;

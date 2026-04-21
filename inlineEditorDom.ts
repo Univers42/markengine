@@ -100,7 +100,7 @@ function readDomNode(node: Node): DomReadResult {
 }
 
 function readTextNode(node: Node): DomReadResult {
-  const value = node.textContent ?? "";
+  const value = (node.textContent ?? "").replace(/\u200B/g, "");
   return value
     ? {
         nodes: [{ type: "text", value }],
