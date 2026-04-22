@@ -1,14 +1,20 @@
 // Markdown shortcuts — inline parsing and block conversion
-import type { BlockType, Block } from '@/entities/block';
-import type { InlineNode } from './ast';
-import { renderInlineNodesToHtml, type InlineHtmlOptions } from './renderers/inlineHtml';
-import { renderInlines, type ReactRenderOptions } from './renderers/react';
-import { parse, parseInline } from './parser';
+import type { BlockType, Block } from "@/entities/block";
+import type { BlockNode, InlineNode } from "./ast";
+import {
+  renderInlineNodesToHtml,
+  type InlineHtmlOptions,
+} from "./renderers/inlineHtml";
+import { renderInlines, type ReactRenderOptions } from "./renderers/react";
+import { parse, parseInline } from "./parser";
 
-export type { BlockDetection } from './shortcutsDetect';
-export { BLOCK_SHORTCUTS, detectBlockType } from './shortcutsDetect';
+export type { BlockDetection } from "./shortcutsDetect";
+export { BLOCK_SHORTCUTS, detectBlockType } from "./shortcutsDetect";
 
-export function parseInlineMarkdown(text: string, options: InlineHtmlOptions = {}): string {
+export function parseInlineMarkdown(
+  text: string,
+  options: InlineHtmlOptions = {},
+): string {
   // Use the full parser's inline engine → convert to HTML
   const nodes = parseInline(text);
   return renderInlineNodesToHtml(nodes, options);
@@ -17,7 +23,10 @@ export function parseInlineMarkdown(text: string, options: InlineHtmlOptions = {
 /**
  * Render a markdown string to React elements.
  */
-export function renderInlineToReact(text: string, o: ReactRenderOptions = {}): React.ReactNode {
+export function renderInlineToReact(
+  text: string,
+  o: ReactRenderOptions = {},
+): React.ReactNode {
   const nodes = parseInline(text);
   return renderInlines(nodes, o);
 }
@@ -28,79 +37,165 @@ export function renderInlineToReact(text: string, o: ReactRenderOptions = {}): R
  */
 export function parseMarkdownToBlocks(markdown: string): Block[] {
   const ast = parse(markdown);
-  return ast.flatMap(node => astToBlocks(node));
+  return ast.flatMap((node) => astToBlocks(node));
 }
 
-function astToBlocks(node: import('./ast').BlockNode): Block[] {
+function astToBlocks(node: BlockNode): Block[] {
   switch (node.type) {
-    case 'heading': {
+    case "document":
+      return node.children.flatMap((child) => astToBlocks(child));
+    case "heading": {
       const level = Math.min(node.level, 4);
       const headingType = `heading_${level}` as BlockType;
-      return [{ id: crypto.randomUUID(), type: headingType, content: inlineToPlain(node.children) }];
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: headingType,
+          content: inlineToPlain(node.children),
+        },
+      ];
     }
-    case 'paragraph':
-      return [{ id: crypto.randomUUID(), type: 'paragraph', content: inlineToPlain(node.children) }];
-    case 'thematic_break':
-      return [{ id: crypto.randomUUID(), type: 'divider', content: '' }];
-    case 'blockquote':
-      return [{ id: crypto.randomUUID(), type: 'quote', content: node.children.map(c => blockToPlain(c)).join('\n') }];
-    case 'code_block':
-      return [{ id: crypto.randomUUID(), type: 'code', content: node.value, language: node.lang || 'plaintext' }];
-    case 'unordered_list':
-      return node.children.map(item => ({
-        id: crypto.randomUUID(),
-        type: 'bulleted_list' as BlockType,
-        content: item.children.map(c => blockToPlain(c)).join('\n'),
-      }));
-    case 'ordered_list':
-      return node.children.map(item => ({
-        id: crypto.randomUUID(),
-        type: 'numbered_list' as BlockType,
-        content: item.children.map(c => blockToPlain(c)).join('\n'),
-      }));
-    case 'task_list':
-      return node.children.map(item => ({
-        id: crypto.randomUUID(),
-        type: 'to_do' as BlockType,
-        content: item.children.map(c => blockToPlain(c)).join('\n'),
-        checked: item.checked,
-      }));
-    case 'callout':
-      return [{
-        id: crypto.randomUUID(),
-        type: 'callout' as BlockType,
-        content: node.children.map(c => blockToPlain(c)).join('\n'),
-      }];
-    case 'table':
-      return [{ id: crypto.randomUUID(), type: 'paragraph', content: '[table]' }];
+    case "paragraph":
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: "paragraph",
+          content: inlineToPlain(node.children),
+        },
+      ];
+    case "thematic_break":
+      return [{ id: crypto.randomUUID(), type: "divider", content: "" }];
+    case "blockquote":
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: "quote",
+          content: node.children.map((c) => blockToPlain(c)).join("\n"),
+        },
+      ];
+    case "code_block":
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: "code",
+          content: node.value,
+          language: node.lang || "plaintext",
+        },
+      ];
+    case "unordered_list":
+      return node.children.map((item) =>
+        listItemToBlock("bulleted_list", item),
+      );
+    case "ordered_list":
+      return node.children.map((item) =>
+        listItemToBlock("numbered_list", item),
+      );
+    case "task_list":
+      return node.children.map((item) =>
+        listItemToBlock("to_do", item, item.checked),
+      );
+    case "callout":
+      return [
+        {
+          id: crypto.randomUUID(),
+          type: "callout" as BlockType,
+          content: node.children.map((c) => blockToPlain(c)).join("\n"),
+        },
+      ];
+    case "table":
+      return [
+        { id: crypto.randomUUID(), type: "paragraph", content: "[table]" },
+      ];
     default:
       return [];
   }
 }
 
-function inlineToPlain(nodes: InlineNode[]): string {
-  return nodes.map(n => {
-    switch (n.type) {
-      case 'text': return n.value;
-      case 'bold': case 'italic': case 'bold_italic': case 'strikethrough':
-      case 'underline': case 'highlight': case 'text_color': case 'background_color': case 'code_rich':
-        return inlineToPlain(n.children);
-      case 'code': return n.value;
-      case 'link': return inlineToPlain(n.children);
-      case 'image': return n.alt;
-      case 'emoji': return n.value;
-      case 'line_break': return '\n';
-      case 'math_inline': return n.value;
-      case 'footnote_ref': return `[${n.label}]`;
-      default: return '';
+type ListItemNodeLike = {
+  children: BlockNode[];
+  checked?: boolean;
+};
+
+function listItemToBlock(
+  type: "bulleted_list" | "numbered_list" | "to_do",
+  item: ListItemNodeLike,
+  checked?: boolean,
+): Block {
+  const nestedBlocks = item.children.flatMap((child) => {
+    if (
+      child.type === "ordered_list" ||
+      child.type === "unordered_list" ||
+      child.type === "task_list"
+    ) {
+      return astToBlocks(child);
     }
-  }).join('');
+
+    return [];
+  });
+
+  const block: Block = {
+    id: crypto.randomUUID(),
+    type,
+    content: item.children.map((child) => blockToPlain(child)).join("\n"),
+  };
+
+  if (checked !== undefined) {
+    block.checked = checked;
+  }
+
+  if (nestedBlocks.length > 0) {
+    block.children = nestedBlocks;
+  }
+
+  return block;
 }
 
-function blockToPlain(node: import('./ast').BlockNode): string {
+function inlineToPlain(nodes: InlineNode[]): string {
+  return nodes
+    .map((n) => {
+      switch (n.type) {
+        case "text":
+          return n.value;
+        case "bold":
+        case "italic":
+        case "bold_italic":
+        case "strikethrough":
+        case "underline":
+        case "highlight":
+        case "text_color":
+        case "background_color":
+        case "code_rich":
+          return inlineToPlain(n.children);
+        case "code":
+          return n.value;
+        case "link":
+          return inlineToPlain(n.children);
+        case "image":
+          return n.alt;
+        case "emoji":
+          return n.value;
+        case "line_break":
+          return "\n";
+        case "math_inline":
+          return n.value;
+        case "footnote_ref":
+          return `[${n.label}]`;
+        default:
+          return "";
+      }
+    })
+    .join("");
+}
+
+function blockToPlain(node: BlockNode): string {
   switch (node.type) {
-    case 'paragraph': return inlineToPlain(node.children);
-    case 'heading': return inlineToPlain(node.children);
-    default: return '';
+    case "paragraph":
+      return inlineToPlain(node.children);
+    case "heading":
+      return inlineToPlain(node.children);
+    case "blockquote":
+      return node.children.map((child) => blockToPlain(child)).join("\n");
+    default:
+      return "";
   }
 }
