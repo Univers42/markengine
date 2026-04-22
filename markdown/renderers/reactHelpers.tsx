@@ -198,7 +198,7 @@ export function renderInlineNode(
         key,
         href: node.href,
         title: node.title || undefined,
-        style: { cursor: "pointer" },
+        className: "editor-link",
         ...(o.externalLinks && isExt
           ? { target: "_blank", rel: "noopener noreferrer" }
           : {}),
@@ -222,19 +222,7 @@ export function renderInlineNode(
         "span",
         {
           key,
-          className: "page-mention-placeholder",
-          style: {
-            color: "var(--color-accent)",
-            textDecoration: "none",
-            backgroundColor: "var(--color-surface-tertiary)",
-            fontWeight: 500,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "0 4px",
-            borderRadius: "4px",
-            whiteSpace: "nowrap",
-          },
+          className: "editor-mention page-mention-placeholder",
         },
         node.pageId,
       );

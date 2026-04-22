@@ -47,7 +47,7 @@ export function renderInlineNodesToHtml(nodes: InlineNode[], options: InlineHtml
             href="${esc(node.href)}" 
             target="_blank" 
             rel="noopener noreferrer"
-            style="color:var(--color-accent);cursor:pointer;text-decoration:underline;text-underline-offset:0.14em"
+            class="editor-link"
           >${renderInlineNodesToHtml(node.children, options)}</a>\u200B`;
         case "internal_link": {
           const resolved = options.resolveInternalLinkTitle?.(node.pageId);
@@ -55,11 +55,10 @@ export function renderInlineNodesToHtml(nodes: InlineNode[], options: InlineHtml
           const icon = resolved?.icon ? `<span style="margin-right:4px">${resolved.icon}</span>` : "";
           
           return `<span 
-            class="page-mention-placeholder" 
+            class="editor-mention page-mention-placeholder" 
             data-page-id="${esc(node.pageId)}"
-            style="color:var(--color-accent);text-decoration:none;background:var(--color-surface-tertiary);padding:0 4px;border-radius:4px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;white-space:nowrap"
             contenteditable="false"
-          >${icon}${esc(title)}</span>`;
+          >${icon}${esc(title)}</span>\u200B`;
         }
         case "image":
           return `<img src="${esc(node.src)}" alt="${esc(node.alt)}" />`;
