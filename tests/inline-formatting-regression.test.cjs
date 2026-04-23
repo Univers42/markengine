@@ -199,6 +199,15 @@ test("inline code inherits background and text color through other wrappers", ()
   assert.match(html, /<strong>delta<\/strong>/);
 });
 
+test("internal page links can render a friendly unavailable fallback title", () => {
+  const html = parseInlineMarkdown("[[page:abc123]]", {
+    resolveInternalLinkTitle: () => ({ title: "Unavailable page" }),
+  });
+
+  assert.match(html, />Unavailable page<\/span>/);
+  assert.doesNotMatch(html, />abc123<\/span>/);
+});
+
 test("typing inside colored text preserves the active color wrapper", () => {
   const result = applyInlineTextEdit(
     "[color=#2563EB]delta[/color] zeta",
