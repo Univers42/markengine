@@ -408,6 +408,9 @@ export const COLLECTION_SLASH_ITEMS = PACKAGE_SLASH_ITEMS.filter(
   },
 );
 
+export const COLLECTION_PAGE_SLASH_ITEM =
+  PACKAGE_SLASH_ITEMS.find((item) => item.type === 'page') ?? null;
+
 export const COLLECTION_ROLE_BADGES: Record<string, string> = {
   admin: getCollectionEmojiValue('star'),
   collaborator: getCollectionEmojiValue('palette'),
