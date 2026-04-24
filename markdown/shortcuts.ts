@@ -102,10 +102,23 @@ function astToBlocks(node: BlockNode): Block[] {
           content: node.children.map((c) => blockToPlain(c)).join("\n"),
         },
       ];
-    case "table":
+    case "table": {
+      const header = node.head.cells.map((cell) =>
+        inlineToPlain(cell.children),
+      );
+      const rows = node.rows.map((row) =>
+        row.cells.map((cell) => inlineToPlain(cell.children)),
+      );
+
       return [
-        { id: crypto.randomUUID(), type: "paragraph", content: "[table]" },
+        {
+          id: crypto.randomUUID(),
+          type: "table_block",
+          content: "",
+          tableData: [header, ...rows],
+        },
       ];
+    }
     default:
       return [];
   }
