@@ -45,7 +45,7 @@ function astToBlocks(node: BlockNode): Block[] {
     case "document":
       return node.children.flatMap((child) => astToBlocks(child));
     case "heading": {
-      const level = Math.min(node.level, 4);
+      const level = node.level;
       const headingType = `heading_${level}` as BlockType;
       return [
         {
