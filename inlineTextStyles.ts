@@ -36,11 +36,11 @@ function normalizeHexColor(value: string | undefined | null): string | null {
   }
 
   const normalized = value.trim().toUpperCase();
-  if (/^#[0-9A-F]{6}$/.test(normalized)) {
+  if (/^#[0-9A-F]{6}$/.test(normalized) || /^#[0-9A-F]{8}$/.test(normalized)) {
     return normalized;
   }
 
-  const shortMatch = normalized.match(/^#([0-9A-F]{3})$/);
+  const shortMatch = normalized.match(/^#([0-9A-F]{3,4})$/);
   if (!shortMatch) {
     const rgbMatch = normalized.match(
       /^RGBA?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(?:\d+|\d*\.\d+))?\s*\)$/,
@@ -55,8 +55,10 @@ function normalizeHexColor(value: string | undefined | null): string | null {
     return `#${rgb.join('')}`;
   }
 
-  const [r, g, b] = shortMatch[1].split('');
-  return `#${r}${r}${g}${g}${b}${b}`;
+  const [r, g, b, a] = shortMatch[1].split('');
+  return a
+    ? `#${r}${r}${g}${g}${b}${b}${a}${a}`
+    : `#${r}${r}${g}${g}${b}${b}`;
 }
 
 function hexToRgba(hex: string, alpha: number) {
